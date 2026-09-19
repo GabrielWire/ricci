@@ -79,6 +79,33 @@ export const App: React.FC = () => {
     localStorage.setItem(`${STORAGE_KEY_PREFIX}${selectedInstrumento.id}`, JSON.stringify(registros));
   }, [registros, selectedInstrumento.id]);
 
+  // Reset accidentals filter if not present in the new instrument
+  useEffect(() => {
+    if (filtros.acidentes !== 'todos' && filtros.acidentes !== '0') {
+      const exists = HINOS_DATA.some((h) => {
+        const trans = calcularTonalidadeInstrumento(h.acidentes, selectedInstrumento);
+        if (filtros.acidentes === '1b') return trans.armadura === '1♭';
+        if (filtros.acidentes === '2b') return trans.armadura === '2♭';
+        if (filtros.acidentes === '3b') return trans.armadura === '3♭';
+        if (filtros.acidentes === '4b') return trans.armadura === '4♭';
+        if (filtros.acidentes === '5b') return trans.armadura === '5♭';
+        if (filtros.acidentes === '6b') return trans.armadura === '6♭';
+        if (filtros.acidentes === '7b') return trans.armadura === '7♭';
+        if (filtros.acidentes === '1s') return trans.armadura === '1♯';
+        if (filtros.acidentes === '2s') return trans.armadura === '2♯';
+        if (filtros.acidentes === '3s') return trans.armadura === '3♯';
+        if (filtros.acidentes === '4s') return trans.armadura === '4♯';
+        if (filtros.acidentes === '5s') return trans.armadura === '5♯';
+        if (filtros.acidentes === '6s') return trans.armadura === '6♯';
+        if (filtros.acidentes === '7s') return trans.armadura === '7♯';
+        return false;
+      });
+      if (!exists) {
+        setFiltros((prev) => ({ ...prev, acidentes: 'todos' }));
+      }
+    }
+  }, [selectedInstrumento, filtros.acidentes]);
+
   const handleToggleAprendido = (hinoNumero: number) => {
     setRegistros((prev) => {
       const current = prev[hinoNumero] || { intro: 'nao_iniciado', inteiro: 'nao_iniciado' };
@@ -260,7 +287,8 @@ export const App: React.FC = () => {
               totalFiltrados={hinosFiltrados.length}
               totalHinos={HINOS_DATA.length}
               onResetFiltros={handleResetFiltros}
-              instrumentoNome={selectedInstrumento.nome}
+              instrumento={selectedInstrumento}
+              hinos={HINOS_DATA}
             />
 
             {hinosFiltrados.length > 0 ? (

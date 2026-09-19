@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Search, X, ArrowUpDown, RotateCcw } from 'lucide-react';
+import type { Instrumento } from '../data/instrumentsData';
+import type { Hino } from '../types';
 
 export interface FiltrosState {
   busca: string;
@@ -16,7 +18,8 @@ interface Props {
   totalFiltrados: number;
   totalHinos: number;
   onResetFiltros: () => void;
-  instrumentoNome: string;
+  instrumento: Instrumento;
+  hinos: Hino[];
 }
 
 export const FilterToolbar: React.FC<Props> = ({
@@ -25,7 +28,8 @@ export const FilterToolbar: React.FC<Props> = ({
   totalFiltrados,
   totalHinos,
   onResetFiltros,
-  instrumentoNome,
+  instrumento,
+  hinos,
 }) => {
   const isFiltered =
     filtros.busca !== '' ||
@@ -34,6 +38,53 @@ export const FilterToolbar: React.FC<Props> = ({
     filtros.categoria !== 'todas' ||
     filtros.status !== 'todos' ||
     filtros.ordenacao !== 'numero_asc';
+
+  // Dynamic calculation: Only show accidentals that ACTUALLY exist in the Hinário for this instrument
+  const opcoesAcidentes = useMemo(() => {
+    const counts: Record<string, number> = {};
+    hinos.forEach((h) => {
+      const total = h.acidentes + instrumento.transposicaoArmadura;
+      let key = '0';
+      if (total < 0) key = `${Math.abs(total)}b`;
+      else if (total > 0) key = `${total}s`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+
+    const ordemBemois = ['1b', '2b', '3b', '4b', '5b', '6b', '7b'];
+    const ordemSustenidos = ['1s', '2s', '3s', '4s', '5s', '6s', '7s'];
+
+    const labelsBemois: Record<string, string> = {
+      '1b': '1 Bemol (1♭)',
+      '2b': '2 Bemóis (2♭)',
+      '3b': '3 Bemóis (3♭)',
+      '4b': '4 Bemóis (4♭)',
+      '5b': '5 Bemóis (5♭)',
+      '6b': '6 Bemóis (6♭)',
+      '7b': '7 Bemóis (7♭)',
+    };
+
+    const labelsSustenidos: Record<string, string> = {
+      '1s': '1 Sustenido (1♯)',
+      '2s': '2 Sustenidos (2♯)',
+      '3s': '3 Sustenidos (3♯)',
+      '4s': '4 Sustenidos (4♯)',
+      '5s': '5 Sustenidos (5♯)',
+      '6s': '6 Sustenidos (6♯)',
+      '7s': '7 Sustenidos (7♯)',
+    };
+
+    const bemois = ordemBemois
+      .filter((k) => counts[k] && counts[k] > 0)
+      .map((k) => ({ valor: k, label: `${labelsBemois[k]} (${counts[k]} hinos)` }));
+
+    const sustenidos = ordemSustenidos
+      .filter((k) => counts[k] && counts[k] > 0)
+      .map((k) => ({ valor: k, label: `${labelsSustenidos[k]} (${counts[k]} hinos)` }));
+
+    const naturalCount = counts['0'] || 0;
+
+    return { naturalCount, bemois, sustenidos };
+  }, [hinos, instrumento]);
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5 transition-colors duration-200">
@@ -111,36 +162,45 @@ export const FilterToolbar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 2. Acidentes no Instrumento (Specific Accidentals Only) */}
+        {/* 2. Acidentes no Instrumento (Dynamic for this specific instrument) */}
         <div>
-          <label className="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1 truncate" title={`Acidentes no ${instrumentoNome}`}>
-            Acidentes ({instrumentoNome})
+          <label className="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1 truncate" title={`Acidentes no ${instrumento.nome}`}>
+            Acidentes ({instrumento.nome})
           </label>
           <select
             value={filtros.acidentes}
             onChange={(e) => setFiltros((prev) => ({ ...prev, acidentes: e.target.value }))}
             className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-indigo-300 dark:border-indigo-500/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs font-medium cursor-pointer"
           >
-            <option value="todos" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Todas as armaduras</option>
-            <option value="0" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">0 acidentes (♮ Natural)</option>
-            
-            <optgroup label="── Bemóis (♭) ──" className="bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300 font-bold">
-              <option value="1b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">1 Bemol (1♭)</option>
-              <option value="2b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">2 Bemóis (2♭)</option>
-              <option value="3b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">3 Bemóis (3♭)</option>
-              <option value="4b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">4 Bemóis (4♭)</option>
-              <option value="5b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">5 Bemóis (5♭)</option>
-              <option value="6b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">6 Bemóis (6♭)</option>
-            </optgroup>
+            <option value="todos" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+              Todas as armaduras ({totalHinos} hinos)
+            </option>
 
-            <optgroup label="── Sustenidos (♯) ──" className="bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300 font-bold">
-              <option value="1s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">1 Sustenido (1♯)</option>
-              <option value="2s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">2 Sustenidos (2♯)</option>
-              <option value="3s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">3 Sustenidos (3♯)</option>
-              <option value="4s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">4 Sustenidos (4♯)</option>
-              <option value="5s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">5 Sustenidos (5♯)</option>
-              <option value="6s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">6 Sustenidos (6♯)</option>
-            </optgroup>
+            {opcoesAcidentes.naturalCount > 0 && (
+              <option value="0" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                0 acidentes (♮ Natural) ({opcoesAcidentes.naturalCount} hinos)
+              </option>
+            )}
+            
+            {opcoesAcidentes.bemois.length > 0 && (
+              <optgroup label="── Bemóis (♭) ──" className="bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300 font-bold">
+                {opcoesAcidentes.bemois.map((opt) => (
+                  <option key={opt.valor} value={opt.valor} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                    {opt.label}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+
+            {opcoesAcidentes.sustenidos.length > 0 && (
+              <optgroup label="── Sustenidos (♯) ──" className="bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300 font-bold">
+                {opcoesAcidentes.sustenidos.map((opt) => (
+                  <option key={opt.valor} value={opt.valor} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                    {opt.label}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 
