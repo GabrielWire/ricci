@@ -15,12 +15,31 @@ import { Music, BookOpen, ExternalLink, Phone, MapPin, ChevronDown } from 'lucid
 
 const STORAGE_KEY_PREFIX = 'ricci_ccb_progress_';
 const STORAGE_KEY_INSTRUMENT = 'ricci_ccb_instrument_id';
+const STORAGE_KEY_THEME = 'ricci_theme';
 
 export const App: React.FC = () => {
   const [selectedInstrumento, setSelectedInstrumento] = useState<Instrumento>(() => {
     const savedId = localStorage.getItem(STORAGE_KEY_INSTRUMENT);
     return INSTRUMENTOS.find((i) => i.id === savedId) || INSTRUMENTOS[0];
   });
+
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_THEME);
+    return saved === 'dark' || saved === 'light' ? saved : 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_THEME, theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   const [registros, setRegistros] = useState<Record<number, RegistroProgresso>>(() => {
     try {
@@ -223,7 +242,9 @@ export const App: React.FC = () => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
+      theme === 'dark' ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-800'
+    }`}>
       <Header
         instrumento={selectedInstrumento}
         onOpenInstrumentModal={() => setIsInstrumentModalOpen(true)}
@@ -231,9 +252,11 @@ export const App: React.FC = () => {
         setActiveTab={setActiveTab}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
         totalAprendidos={totalAprendidos}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
         {activeTab === 'hinos' ? (
           <>
             <StatsDashboard
@@ -269,17 +292,17 @@ export const App: React.FC = () => {
                 </div>
 
                 {visibleCount < hinosFiltrados.length && (
-                  <div className="flex flex-wrap items-center justify-center gap-3 pt-4 pb-8">
+                  <div className="flex flex-wrap items-center justify-center gap-2.5 pt-4 pb-8">
                     <button
                       onClick={() => setVisibleCount((prev) => prev + 60)}
-                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-bold text-xs shadow-lg transition-all flex items-center gap-1.5 active:scale-95"
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 active:scale-95"
                     >
                       <ChevronDown className="w-4 h-4" />
                       Mostrar mais 60 hinos
                     </button>
                     <button
                       onClick={() => setVisibleCount(hinosFiltrados.length)}
-                      className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-semibold text-xs transition-all active:scale-95"
+                      className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95 shadow-2xs"
                     >
                       Mostrar todos ({hinosFiltrados.length})
                     </button>
@@ -287,15 +310,15 @@ export const App: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                <h3 className="text-base font-bold text-white">Nenhum hino encontrado</h3>
-                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              <div className="text-center py-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-2xs">
+                <BookOpen className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Nenhum hino encontrado</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                   Ajuste os filtros de busca ou armadura de clave para exibir os hinos.
                 </p>
                 <button
                   onClick={handleResetFiltros}
-                  className="mt-3 px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors"
+                  className="mt-3 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-2xs"
                 >
                   Limpar Filtros
                 </button>
@@ -310,33 +333,33 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="bg-slate-950 border-t border-slate-800/80 mt-8 py-6 text-xs text-slate-400">
+      <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 mt-8 py-6 text-xs text-slate-500 dark:text-slate-400 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold">
                 <Music className="w-4 h-4" />
               </div>
               <div>
-                <span className="font-extrabold text-amber-400 text-sm tracking-wide block">RICCI - ACADEMIA DE MÚSICA</span>
-                <span className="text-slate-500 text-[11px]">Santo André - SP</span>
+                <span className="font-extrabold text-indigo-700 dark:text-indigo-400 text-sm tracking-tight block">RICCI - ACADEMIA DE MÚSICA</span>
+                <span className="text-slate-400 text-[11px]">Santo André - SP</span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-[11px]">
-              <div className="flex items-center gap-1 text-slate-300">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                <MapPin className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span>Av. Das Nações, 749</span>
               </div>
-              <div className="flex items-center gap-1 text-slate-300">
-                <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                <Phone className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span>(11) 4475-6918</span>
               </div>
               <a
                 href="https://www.ricciacademiademusica.com"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors font-semibold"
+                className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors font-semibold"
               >
                 <span>ricciacademiademusica.com</span>
                 <ExternalLink className="w-3 h-3" />
@@ -344,7 +367,7 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-[10px] text-slate-500 text-center">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
             Classificação por dificuldade baseada no roteiro de estudos do Hinário 5 (Crislaine M. Ventura). &copy; {new Date().getFullYear()} RICCI Academia de Música.
           </p>
         </div>
