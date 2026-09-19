@@ -32,6 +32,7 @@ export interface MsaStudentLessonProgress {
   completedAt?: any;
   updatedAt?: any;
   teacherNotes?: string;
+  evaluatedAt?: string;
 }
 
 export interface MsaPhaseSummary {

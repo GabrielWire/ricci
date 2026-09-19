@@ -17,6 +17,7 @@ import {
   Plus,
   Trash2,
   Sliders,
+  Calendar,
 } from 'lucide-react';
 import {
   getStudentById,
@@ -87,6 +88,7 @@ export const AlunoDetalhes: React.FC = () => {
   const [expandedMsaPhaseId, setExpandedMsaPhaseId] = useState<string | null>(null);
   const [updatingLessonId, setUpdatingLessonId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<Record<string, string>>({});
+  const [editingMsaDates, setEditingMsaDates] = useState<Record<string, string>>({});
 
   // Instrument Method State
   const [, setMethodDoc] = useState<AlunoMetodoProgressoDoc | null>(null);
@@ -106,10 +108,24 @@ export const AlunoDetalhes: React.FC = () => {
   const [novoStatusLicao, setNovoStatusLicao] = useState<MetodoLicaoStatus>('Concluído');
   const [novoProgressoLicao, setNovoProgressoLicao] = useState<number>(100);
   const [adicionandoLicao, setAdicionandoLicao] = useState(false);
+  const [novaDataLicao, setNovaDataLicao] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [editingMethodLessonDates, setEditingMethodLessonDates] = useState<Record<string, string>>({});
 
   const [editingMethodLessonNotes, setEditingMethodLessonNotes] = useState<Record<string, string>>({});
   const [updatingMethodLessonId, setUpdatingMethodLessonId] = useState<string | null>(null);
   const [filtroStatusMetodoLicoes, setFiltroStatusMetodoLicoes] = useState<string>('todos');
+  const formatarDataBr = (dataVal?: any) => {
+    if (!dataVal) return '';
+    if (typeof dataVal === 'string' && dataVal.includes('-')) {
+      const parts = dataVal.split('T')[0].split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    if (dataVal?.toDate) return dataVal.toDate().toLocaleDateString('pt-BR');
+    const d = new Date(dataVal);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+    return String(dataVal);
+  };
+
 
   // Edit instrument mode for teacher
   const [isEditingInstrument, setIsEditingInstrument] = useState(false);
@@ -251,6 +267,7 @@ export const AlunoDetalhes: React.FC = () => {
         titulo: novoTituloLicao,
         status: novoStatusLicao,
         progress: novoProgressoLicao,
+        evaluatedAt: novaDataLicao,
       });
 
       const updatedList = await listStudentMethodLessons(student.uid);
@@ -291,7 +308,8 @@ export const AlunoDetalhes: React.FC = () => {
     lesson: MetodoLicaoDoc,
     nextStatus: MetodoLicaoStatus,
     nextProgress: number,
-    notes?: string
+    notes?: string,
+    evalDate?: string
   ) => {
     if (!student) return;
     setUpdatingMethodLessonId(lesson.id);
@@ -306,6 +324,7 @@ export const AlunoDetalhes: React.FC = () => {
         status: nextStatus,
         progress: nextProgress,
         teacherNotes: notes !== undefined ? notes : lesson.teacherNotes,
+        evaluatedAt: evalDate !== undefined ? evalDate : (editingMethodLessonDates[lesson.id] || lesson.evaluatedAt || new Date().toISOString().split('T')[0]),
       });
 
       const updatedList = await listStudentMethodLessons(student.uid);
@@ -435,7 +454,8 @@ export const AlunoDetalhes: React.FC = () => {
     lessonId: string,
     newStatus: MsaLessonStatus,
     newProgress: number,
-    notes?: string
+    notes?: string,
+    evalDate?: string
   ) => {
     if (!student) return;
     setUpdatingLessonId(lessonId);
@@ -448,6 +468,7 @@ export const AlunoDetalhes: React.FC = () => {
           status: newStatus,
           progress: newProgress,
           teacherNotes: notes,
+          evaluatedAt: evalDate !== undefined ? evalDate : (editingMsaDates[lessonId] || msaProgressMap[lessonId]?.evaluatedAt || new Date().toISOString().split('T')[0]),
         },
         msaPhases,
         msaLessonsByPhase,
@@ -462,6 +483,7 @@ export const AlunoDetalhes: React.FC = () => {
           status: newStatus,
           progress: newProgress,
           teacherNotes: notes !== undefined ? notes : prev[lessonId]?.teacherNotes,
+          evaluatedAt: evalDate !== undefined ? evalDate : (editingMsaDates[lessonId] || prev[lessonId]?.evaluatedAt || new Date().toISOString().split('T')[0]),
           updatedAt: new Date().toISOString(),
         },
       }));
@@ -913,7 +935,7 @@ export const AlunoDetalhes: React.FC = () => {
                     </div>
                   </div>
 
-                  <form onSubmit={handleAddMethodLesson} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
+                  <form onSubmit={handleAddMethodLesson} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 items-end">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Página Nº:
@@ -944,7 +966,20 @@ export const AlunoDetalhes: React.FC = () => {
                       />
                     </div>
 
-                    <div className="lg:col-span-1">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Data de Registro:
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={novaDataLicao}
+                        onChange={(e) => setNovaDataLicao(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm font-bold text-slate-900 dark:text-white shadow-2xs focus:ring-2 focus:ring-purple-500 focus:outline-none cursor-pointer"
+                      />
+                    </div>
+
+                    <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Status Inicial:
                       </label>
@@ -963,7 +998,7 @@ export const AlunoDetalhes: React.FC = () => {
                       </select>
                     </div>
 
-                    <div className="lg:col-span-1">
+                    <div>
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Título / Foco (Opcional):
                       </label>
@@ -1072,6 +1107,12 @@ export const AlunoDetalhes: React.FC = () => {
                                       {lesson.titulo}
                                     </span>
                                   )}
+                                  {lesson.evaluatedAt && (
+                                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                      <Calendar className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                                      {formatarDataBr(lesson.evaluatedAt)}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
@@ -1128,11 +1169,27 @@ export const AlunoDetalhes: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Teacher Notes per Lesson */}
+                            {/* Teacher Notes & Date per Lesson */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 shrink-0">
-                                Observação da Lição:
-                              </span>
+                              <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">
+                                <Calendar className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                                <input
+                                  type="date"
+                                  value={
+                                    editingMethodLessonDates[lesson.id] !== undefined
+                                      ? editingMethodLessonDates[lesson.id]
+                                      : (lesson.evaluatedAt || new Date().toISOString().split('T')[0])
+                                  }
+                                  onChange={(e) =>
+                                    setEditingMethodLessonDates((prev) => ({
+                                      ...prev,
+                                      [lesson.id]: e.target.value,
+                                    }))
+                                  }
+                                  className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                                />
+                              </div>
+
                               <input
                                 type="text"
                                 value={notes}
@@ -1146,9 +1203,17 @@ export const AlunoDetalhes: React.FC = () => {
                                 className="flex-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 focus:bg-white dark:bg-slate-800 dark:focus:bg-slate-750 border border-slate-300 dark:border-slate-600 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
                               />
                               <button
-                                onClick={() => handleUpdateMethodLesson(lesson, status, progress, notes)}
+                                onClick={() =>
+                                  handleUpdateMethodLesson(
+                                    lesson,
+                                    status,
+                                    progress,
+                                    notes,
+                                    editingMethodLessonDates[lesson.id] || lesson.evaluatedAt || new Date().toISOString().split('T')[0]
+                                  )
+                                }
                                 disabled={isUpdating}
-                                className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5 active:scale-95"
+                                className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5 active:scale-95"
                               >
                                 {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Salvar Nota'}
                               </button>
@@ -1365,11 +1430,27 @@ export const AlunoDetalhes: React.FC = () => {
                                 </div>
                               </div>
 
-                              {/* Teacher Notes / Observações do Professor */}
+                              {/* Teacher Notes & Date per Lesson */}
                               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 shrink-0">
-                                  Observação do Professor:
-                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">
+                                  <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                                  <input
+                                    type="date"
+                                    value={
+                                      editingMsaDates[lesson.id] !== undefined
+                                        ? editingMsaDates[lesson.id]
+                                        : (pDoc?.evaluatedAt || (pDoc?.updatedAt?.toDate ? pDoc.updatedAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]))
+                                    }
+                                    onChange={(e) =>
+                                      setEditingMsaDates((prev) => ({
+                                        ...prev,
+                                        [lesson.id]: e.target.value,
+                                      }))
+                                    }
+                                    className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                                  />
+                                </div>
+
                                 <input
                                   type="text"
                                   value={notes}
@@ -1383,7 +1464,16 @@ export const AlunoDetalhes: React.FC = () => {
                                   className="flex-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 focus:bg-white dark:bg-slate-800 dark:focus:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs"
                                 />
                                 <button
-                                  onClick={() => handleUpdateLesson(phase.id, lesson.id, status, progress, notes)}
+                                  onClick={() =>
+                                    handleUpdateLesson(
+                                      phase.id,
+                                      lesson.id,
+                                      status,
+                                      progress,
+                                      notes,
+                                      editingMsaDates[lesson.id] || pDoc?.evaluatedAt || new Date().toISOString().split('T')[0]
+                                    )
+                                  }
                                   disabled={isUpdating}
                                   className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs flex items-center gap-1.5 active:scale-95"
                                 >

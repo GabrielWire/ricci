@@ -31,6 +31,18 @@ export const AlunoMetodo: React.FC = () => {
   const { userData, currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
+  const formatarDataBr = (dataVal?: any) => {
+    if (!dataVal) return '';
+    if (typeof dataVal === 'string' && dataVal.includes('-')) {
+      const parts = dataVal.split('T')[0].split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    if (dataVal?.toDate) return dataVal.toDate().toLocaleDateString('pt-BR');
+    const d = new Date(dataVal);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+    return String(dataVal);
+  };
+
   const [progresso, setProgresso] = useState<AlunoMetodoProgressoDoc | null>(null);
   const [metodoLessons, setMetodoLessons] = useState<MetodoLicaoDoc[]>([]);
   const [activeMetodoTab, setActiveMetodoTab] = useState<string>('');
@@ -508,13 +520,19 @@ export const AlunoMetodo: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-mono text-xs font-black px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                         Pág. {lesson.numeroPagina} &bull; Lição {lesson.numeroLicao}
                       </span>
                       {lesson.titulo && (
                         <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                           {lesson.titulo}
+                        </span>
+                      )}
+                      {(lesson.evaluatedAt || lesson.completedAt) && (
+                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                          {formatarDataBr(lesson.evaluatedAt || lesson.completedAt)}
                         </span>
                       )}
                     </div>

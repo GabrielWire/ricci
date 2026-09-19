@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Sparkles,
   Loader2,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -33,6 +34,18 @@ export const AlunoMsa: React.FC = () => {
   const [overall, setOverall] = useState<MsaStudentOverallProgress | null>(null);
   const [expandedPhaseId, setExpandedPhaseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const formatarDataBr = (dataVal?: any) => {
+    if (!dataVal) return '';
+    if (typeof dataVal === 'string' && dataVal.includes('-')) {
+      const parts = dataVal.split('T')[0].split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    if (dataVal?.toDate) return dataVal.toDate().toLocaleDateString('pt-BR');
+    const d = new Date(dataVal);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+    return String(dataVal);
+  };
+
 
   const inst = useMemo(() => {
     return resolveInstrumento(userData?.instrument);
@@ -282,6 +295,12 @@ export const AlunoMsa: React.FC = () => {
                                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200">
                                         {lesson.type || 'Geral'}
                                       </span>
+                                      {(pDoc?.evaluatedAt || pDoc?.completedAt) && (
+                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                          <Calendar className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                                          {formatarDataBr(pDoc?.evaluatedAt || pDoc?.completedAt)}
+                                        </span>
+                                      )}
                                     </div>
                                     {lesson.description && (
                                       <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">

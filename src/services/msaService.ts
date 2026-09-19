@@ -367,6 +367,7 @@ export async function updateStudentLessonProgress(
     status: MsaLessonStatus;
     progress: number;
     teacherNotes?: string;
+    evaluatedAt?: string;
   },
   phases: MsaPhaseDoc[],
   lessonsByPhase: Record<string, MsaLessonDoc[]>,
@@ -384,6 +385,7 @@ export async function updateStudentLessonProgress(
     status: updates.status,
     progress: Math.min(100, Math.max(0, Math.round(updates.progress))),
     teacherNotes: updates.teacherNotes !== undefined ? updates.teacherNotes : (existing?.teacherNotes || ''),
+    evaluatedAt: updates.evaluatedAt !== undefined ? updates.evaluatedAt : (existing?.evaluatedAt || nowIso.split('T')[0]),
     startedAt: existing?.startedAt || (updates.status !== 'Não iniciado' ? nowIso : null),
     completedAt: isDone ? (existing?.completedAt || nowIso) : null,
     updatedAt: serverTimestamp(),

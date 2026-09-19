@@ -43,6 +43,7 @@ export interface MetodoLicaoDoc {
   status: MetodoLicaoStatus;
   progress: number;      // 0 - 100%
   teacherNotes?: string; // Parecer / orientação pedagógica do professor
+  evaluatedAt?: string; // Data da avaliação (YYYY-MM-DD)
   startedAt?: any;
   completedAt?: any;
   createdAt?: any;

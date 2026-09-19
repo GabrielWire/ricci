@@ -75,6 +75,7 @@ export async function saveStudentMethodLesson(
     status: MetodoLicaoStatus;
     progress: number;
     teacherNotes?: string;
+    evaluatedAt?: string;
   }
 ): Promise<MetodoLicaoDoc> {
   const pag = Math.max(1, Number(lessonData.numeroPagina) || 1);
@@ -100,6 +101,7 @@ export async function saveStudentMethodLesson(
     status: lessonData.status,
     progress: normProgress,
     teacherNotes: lessonData.teacherNotes !== undefined ? lessonData.teacherNotes.trim() : (existing?.teacherNotes || ''),
+    evaluatedAt: lessonData.evaluatedAt !== undefined ? lessonData.evaluatedAt : (existing?.evaluatedAt || nowIso.split('T')[0]),
     startedAt: existing?.startedAt || (lessonData.status !== 'Não iniciado' ? nowIso : null),
     completedAt: isDone ? (existing?.completedAt || nowIso) : null,
     updatedAt: serverTimestamp(),
