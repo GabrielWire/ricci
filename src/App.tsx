@@ -12,6 +12,8 @@ import { AlunoDetalhes } from './pages/admin/AlunoDetalhes';
 import { AlunoDashboard } from './pages/aluno/AlunoDashboard';
 import { AlunoProgresso } from './pages/aluno/AlunoProgresso';
 import { AlunoPerfil } from './pages/aluno/AlunoPerfil';
+import { MsaAdminHub } from './pages/admin/MsaAdminHub';
+import { AlunoMsa } from './pages/aluno/AlunoMsa';
 
 import { Music, MapPin, Phone, ExternalLink } from 'lucide-react';
 
@@ -21,7 +23,7 @@ const RootRedirect: React.FC = () => {
   const { currentUser, role, loading } = useAuth();
   if (loading) return null;
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (role === 'admin') return <Navigate to="/admin" replace />;
+  if (role === 'admin' || role === 'professor') return <Navigate to="/admin" replace />;
   return <Navigate to="/aluno" replace />;
 };
 
@@ -62,7 +64,7 @@ const MainLayout: React.FC = () => {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor']}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -70,15 +72,23 @@ const MainLayout: React.FC = () => {
           <Route
             path="/admin/alunos"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor']}>
                 <AlunosList />
+              </ProtectedRoute>
+            }
+          />
+                    <Route
+            path="/admin/msa"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+                <MsaAdminHub />
               </ProtectedRoute>
             }
           />
           <Route
             path="/admin/alunos/:id"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor']}>
                 <AlunoDetalhes />
               </ProtectedRoute>
             }
@@ -90,6 +100,14 @@ const MainLayout: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['aluno']}>
                 <AlunoDashboard />
+              </ProtectedRoute>
+            }
+          />
+                    <Route
+            path="/aluno/msa"
+            element={
+              <ProtectedRoute allowedRoles={['aluno']}>
+                <AlunoMsa />
               </ProtectedRoute>
             }
           />

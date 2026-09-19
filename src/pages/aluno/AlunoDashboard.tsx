@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, CheckCircle2, Music, GraduationCap, ArrowRight, Award } from 'lucide-react';
+import { BookOpen, CheckCircle2, Music, GraduationCap, ArrowRight, Award, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { resolveInstrumento } from '../../utils/instrumentUtils';
 
@@ -11,6 +11,9 @@ export const AlunoDashboard: React.FC = () => {
   const hinosConcluidos = userData?.hinosConcluidos || 0;
   const hinosEmProgresso = userData?.hinosEmProgresso || 0;
   const progressoGeral = userData?.progressoGeral || 0;
+
+  const msaPhaseName = userData?.msaCurrentPhaseName || 'Fase 1 — Fundamentos da Música';
+  const msaProgress = userData?.msaGeneralProgress || 0;
 
   const inst = useMemo(() => {
     return resolveInstrumento(userData?.instrument);
@@ -34,14 +37,21 @@ export const AlunoDashboard: React.FC = () => {
             Olá, {userData?.name || 'Aluno(a)'}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            Seu plano de estudos está configurado para o <strong className="text-indigo-600 dark:text-indigo-400">{inst.nome}</strong>. Acompanhe os hinos e escalas no Hinário 5.
+            Seu plano de estudos está configurado para o <strong className="text-indigo-600 dark:text-indigo-400">{inst.nome}</strong>. Acompanhe os hinos e o método MSA.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto">
+          <Link
+            to="/aluno/msa"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-2xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span>Meu MSA</span>
+          </Link>
           <Link
             to="/aluno/progresso"
-            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-2xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-bold shadow-2xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
           >
             <BookOpen className="w-4 h-4" />
             <span>Meus Hinos</span>
@@ -49,11 +59,40 @@ export const AlunoDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Instrument Pedagogical Plan Card */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50 via-slate-50 to-white dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-900 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* MSA Progress Quick Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50 via-slate-50 to-white dark:from-indigo-950/40 dark:via-slate-900 dark:to-slate-900 border border-indigo-200/80 dark:border-indigo-800/60 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold text-xs uppercase tracking-wider">
-            <GraduationCap className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" />
+            <span>Método Simplificado de Aprendizagem (MSA)</span>
+          </div>
+          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+            {msaPhaseName}
+          </h3>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Progresso Geral: <strong className="text-indigo-600 dark:text-indigo-400 font-mono">{msaProgress}%</strong> concluído na trilha de lições.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="w-32 bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-300 dark:border-slate-700 hidden sm:block">
+            <div className="bg-indigo-600 h-full rounded-full transition-all" style={{ width: `${msaProgress}%` }} />
+          </div>
+          <Link
+            to="/aluno/msa"
+            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer ml-auto"
+          >
+            <span>Acessar Lições</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Instrument Pedagogical Plan Card */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+            <GraduationCap className="w-4 h-4 text-indigo-600" />
             <span>Diretrizes Pedagógicas CCB &bull; {inst.nome}</span>
           </div>
           <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl">
@@ -70,7 +109,7 @@ export const AlunoDashboard: React.FC = () => {
 
         <Link
           to="/aluno/progresso"
-          className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-2xs"
+          className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-2xs"
         >
           <span>Ver Escalas ({inst.escalasRecomendadas.length})</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -127,7 +166,7 @@ export const AlunoDashboard: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
-              Progresso Geral
+              Progresso Geral Hinário
             </span>
             <span className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 font-mono mt-1 block">
               {progressoGeral}%

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Music, Sun, Moon, LogOut, Users, BookOpen, User, LayoutDashboard, Shield, UserCheck } from 'lucide-react';
+import { Music, GraduationCap, Sun, Moon, LogOut, Users, BookOpen, User, LayoutDashboard, Shield, UserCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
           {currentUser && (
             <div className="flex items-center gap-1 w-full md:w-auto justify-center">
               <nav className="flex p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold">
-                {role === 'admin' ? (
+                {(role === 'admin' || role === 'professor') ? (
                   <>
                     <Link
                       to="/admin"
@@ -101,6 +101,18 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                       <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span>Alunos</span>
                     </Link>
+
+                    <Link
+                      to="/admin/msa"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/admin/msa')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Gestão MSA</span>
+                    </Link>
                   </>
                 ) : (
                   <>
@@ -114,6 +126,18 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                     >
                       <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span>Início</span>
+                    </Link>
+
+                    <Link
+                      to="/aluno/msa"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/aluno/msa')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Meu MSA</span>
                     </Link>
 
                     <Link
@@ -157,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                     {userData.name}
                   </span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    {role === 'admin' ? (
+                    {(role === 'admin' || role === 'professor') ? (
                       <span className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-0.5">
                         <Shield className="w-2.5 h-2.5" /> Admin
                       </span>
