@@ -1,28 +1,29 @@
 import React from 'react';
-import { Music, Sliders, BookOpen, Award, Download, Sun, Moon } from 'lucide-react';
-import type { Instrumento } from '../data/instrumentsData';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Music, Sun, Moon, LogOut, Users, BookOpen, User, LayoutDashboard, Shield, UserCheck } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
-  instrumento: Instrumento;
-  onOpenInstrumentModal: () => void;
-  activeTab: 'hinos' | 'escalas';
-  setActiveTab: (tab: 'hinos' | 'escalas') => void;
-  onOpenBackupModal: () => void;
-  totalAprendidos: number;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  instrumento,
-  onOpenInstrumentModal,
-  activeTab,
-  setActiveTab,
-  onOpenBackupModal,
-  totalAprendidos,
-  theme,
-  onToggleTheme,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
+  const { currentUser, userData, role, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const isActive = (path: string) => {
+    if (path === '/admin') return location.pathname === '/admin';
+    if (path === '/aluno') return location.pathname === '/aluno';
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -30,104 +31,166 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Logo & School Branding */}
           <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 flex items-center justify-center shadow-sm shadow-indigo-600/30 text-white font-bold shrink-0">
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 flex items-center justify-center shadow-sm shadow-indigo-600/30 text-white font-bold shrink-0 group-hover:scale-105 transition-transform">
                 <Music className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="font-extrabold tracking-tight text-indigo-700 dark:text-indigo-400 text-base sm:text-lg uppercase">RICCI</span>
-                  <span className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-300 dark:border-slate-700 pl-2">Academia de Música</span>
+                  <span className="font-extrabold tracking-tight text-indigo-700 dark:text-indigo-400 text-base sm:text-lg uppercase">
+                    RICCI
+                  </span>
+                  <span className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-300 dark:border-slate-700 pl-2">
+                    Academia de Música
+                  </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  Preparatório Orquestra CCB &bull; Hinário 5
+                  Portal Orquestra CCB &bull; Hinário 5
                 </p>
               </div>
-            </div>
+            </Link>
 
-            {/* Mobile Actions (Theme + Backup) */}
+            {/* Mobile Actions (Theme + Logout) */}
             <div className="flex items-center gap-1.5 md:hidden">
               <button
                 onClick={onToggleTheme}
-                title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+                title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
               </button>
-              <button
-                onClick={onOpenBackupModal}
-                title="Backup e Dados"
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-              </button>
+
+              {currentUser && (
+                <button
+                  onClick={handleLogout}
+                  title="Sair da conta"
+                  className="p-2 rounded-lg bg-slate-100 hover:bg-rose-100 dark:bg-slate-800 dark:hover:bg-rose-950/60 border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-rose-600 dark:text-slate-300 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Instrument Chip / Selector */}
-          <div className="flex items-center gap-2 w-full md:w-auto justify-center">
-            <button
-              onClick={onOpenInstrumentModal}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-indigo-50/70 dark:bg-slate-800/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-150 shadow-2xs"
-            >
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Instrumento:</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{instrumento.nome}</span>
-                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono font-bold">
-                  {instrumento.afinacao}
-                </span>
+          {/* Navigation Links based on Role */}
+          {currentUser && (
+            <div className="flex items-center gap-1 w-full md:w-auto justify-center">
+              <nav className="flex p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold">
+                {role === 'admin' ? (
+                  <>
+                    <Link
+                      to="/admin"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/admin')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Painel Geral</span>
+                    </Link>
+
+                    <Link
+                      to="/admin/alunos"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/admin/alunos')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Alunos</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/aluno"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/aluno')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Início</span>
+                    </Link>
+
+                    <Link
+                      to="/aluno/progresso"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/aluno/progresso')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Meus Hinos</span>
+                    </Link>
+
+                    <Link
+                      to="/aluno/perfil"
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                        isActive('/aluno/perfil')
+                          ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Perfil</span>
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </div>
+          )}
+
+          {/* User Profile, Theme & Logout (Desktop) */}
+          <div className="hidden md:flex items-center gap-2.5">
+            {currentUser && userData ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <div className="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center">
+                  {userData.name.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="leading-none text-left">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block max-w-[130px] truncate">
+                    {userData.name}
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    {role === 'admin' ? (
+                      <span className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-0.5">
+                        <Shield className="w-2.5 h-2.5" /> Admin
+                      </span>
+                    ) : (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
+                        <UserCheck className="w-2.5 h-2.5" /> {userData.instrument}
+                      </span>
+                    )}
+                  </span>
+                </div>
               </div>
-              <Sliders className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 ml-0.5 group-hover:rotate-45 transition-transform" />
-            </button>
-          </div>
-
-          {/* Navigation & Desktop Tools */}
-          <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end">
-            {/* PrimeFaces SelectButton Tabs */}
-            <nav className="flex p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700">
-              <button
-                onClick={() => setActiveTab('hinos')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'hinos'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Hinos (480)
-              </button>
-
-              <button
-                onClick={() => setActiveTab('escalas')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'escalas'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Escalas
-              </button>
-            </nav>
+            ) : null}
 
             {/* Desktop Theme Switcher */}
             <button
               onClick={onToggleTheme}
-              title={theme === 'dark' ? 'Mudar para Modo Claro (Jakarta Light)' : 'Mudar para Modo Escuro (PrimeFaces Vela)'}
-              className="hidden md:flex items-center p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors shadow-2xs"
+              title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+              className="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors shadow-2xs cursor-pointer"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
             </button>
 
-            {/* Desktop Backup Button */}
-            <button
-              onClick={onOpenBackupModal}
-              title="Gerenciar Dados e Backup"
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors shadow-2xs"
-            >
-              <Download className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>Backup ({totalAprendidos})</span>
-            </button>
+            {/* Logout Button */}
+            {currentUser && (
+              <button
+                onClick={handleLogout}
+                title="Sair da conta"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-slate-200 dark:border-slate-700 hover:border-rose-300 text-xs font-semibold text-slate-600 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 transition-colors shadow-2xs cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sair</span>
+              </button>
+            )}
           </div>
 
         </div>

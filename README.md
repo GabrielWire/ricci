@@ -1,42 +1,110 @@
-# RICCI - Preparatório para a Orquestra CCB (Hinário 5)
+# RICCI - Portal de Gerenciamento da Orquestra CCB (Hinário 5)
 
-Web application interativa e *offline-first* desenvolvida para a **RICCI - Academia de Música** (Santo André/SP), voltada para alunos e candidatos que estudam para ingressar e tocar na orquestra da **Congregação Cristã no Brasil (CCB)**.
+Web application interativa desenvolvida para a **RICCI - Academia de Música** (Santo André/SP), voltada para a gestão pedagógica e acompanhamento de alunos que estudam para ingressar na orquestra da **Congregação Cristã no Brasil (CCB)**.
+
+---
+
+## 🏛️ Arquitetura do Sistema
+
+```
+AWS Amplify (Hospedagem e CI/CD do Frontend SPA)
+       ↓
+React 19 + TypeScript + Vite + Tailwind CSS (Estilo PrimeFaces Jakarta)
+       ↓
+┌─────────────────────────┬─────────────────────────┐
+│ Firebase Authentication │     Cloud Firestore     │
+│ (E-mail/Senha + Roles)  │ (Cadastros e Progresso) │
+└─────────────────────────┴─────────────────────────┘
+```
+
+- **Hospedagem & Deploy**: Exclusivamente no **AWS Amplify Hosting**.
+- **Autenticação**: **Firebase Authentication** com separação estrita de perfis (`admin` e `aluno`).
+- **Banco de Dados**: **Cloud Firestore** otimizado para baixíssimo consumo de leituras (agregados denormalizados no documento do aluno).
 
 ---
 
 ## 🎯 Principais Funcionalidades
 
-- 🎻 **Seleção de Instrumento e Família**: Suporte a Cordas (Violino, Viola, Violoncelo), Madeiras (Flauta, Clarinete, Oboé, Fagote, Saxofones), Metais (Trompete, Trompa, Trombone, Bombardino, Tuba) e Teclado/Órgão.
-- 🎼 **Transposição Automática de Tonalidade**: Cálculo dinâmico das armaduras de clave para instrumentos transpositores (em Dó, Si♭, Mi♭ e Fá). O filtro e a indicação visual de acidentes refletem exatamente o que o aluno lê na partitura.
-- 📖 **Catálogo Completo do Hinário 5**: Todos os 480 hinos + 6 coros com metadados musicais oficiais extraídos de partituras (fórmulas de compasso, acidentes, títulos e hinos de meia-hora).
-- 📊 **Classificação Pedagógica de Dificuldade**:
-  - **Fácil / Médio / Difícil** categorizados tanto para a **Introdução** quanto para o **Hino Inteiro** (baseado no estudo de referência CCB de Crislaine M. Ventura).
-- 📱 **Interface Minimalista e Mobile-First**: Grade responsiva de caixas de estudo compactas, permitindo visualização de dezenas de hinos na tela do celular sem rolagem excessiva.
-- ⚡ **Marcação em 1 Toque**: Alterne o status de cada hino (Estudando / Aprendido) com apenas um clique.
-- 🎺 **Caderno Digital de Escalas**: Biblioteca completa de escalas maiores obrigatórias, tessitura (oitavas), digitação de arpejos e orientações para o GEM.
-- 💾 **Persistência Local e Backup**: Progresso salvo no localStorage do navegador, com opção de exportação/importação de arquivo JSON para backup.
-- 📴 **100% Offline-First**: Sem dependência de APIs externas ou bancos de dados lentos.
+### 1. Área Administrativa (`/admin`)
+- **Dashboard Executivo**: Indicadores em tempo real (Total de Alunos, Alunos Ativos, Hinos em Progresso, Hinos Concluídos).
+- **Gestão de Alunos (`/admin/alunos`)**:
+  - Busca instantânea por nome, e-mail e telefone.
+  - Filtro por instrumento oficial (Violino, Viola, Cello, Contrabaixo, Madeiras, Metais, etc.).
+  - Ordenação por nome e percentual de evolução.
+  - **Cadastro de Aluno em 1 Toque**: Criação de usuário no Firebase Auth e Firestore sem desconectar a sessão do administrador.
+- **Página de Detalhes do Aluno (`/admin/alunos/:id`)**:
+  - Ficha cadastral completa e gráficos de evolução.
+  - Gerenciamento dos 480 hinos do aluno: ajuste de status (*Não iniciado*, *Em aprendizado*, *Em progresso*, *Concluído*) e percentual de domínio musical (0 a 100%).
+
+### 2. Área do Aluno (`/aluno`)
+- **Painel Pessoal**: Indicadores de avanço individual, hinos aprendidos e metas para a orquestra.
+- **Meus Hinos (`/aluno/progresso`)**:
+  - Visualização interativa dos 480 hinos com armaduras e acidentes transpostos especificamente para o instrumento do aluno.
+  - Filtro dinâmico que exibe apenas os acidentes que realmente existem no Hinário para aquele instrumento.
+  - Marcação rápida de estudos sincronizada com o banco de dados em nuvem.
+- **Meu Perfil (`/aluno/perfil`)**:
+  - Edição de nome, telefone e instrumento oficial.
+
+### 3. Design PrimeFaces Jakarta
+- Tipografia oficial **Plus Jakarta Sans** (Google Fonts).
+- Paleta corporativa PrimeTek com suporte nativo a **Modo Claro** e **Modo Escuro**.
+- Componentes elegantes (`p-menubar`, `p-card`, `p-selectbutton`, `p-tag`, `p-progressbar`, `p-dialog`).
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## ⚙️ Configuração do Firebase & AWS Amplify
 
-- **[React 19](https://react.dev/)**
-- **[TypeScript](https://www.typescriptlang.org/)**
-- **[Vite 6](https://vitejs.dev/)**
-- **[Tailwind CSS v4](https://tailwindcss.com/)**
-- **[Lucide React](https://lucide.dev/)**
+### 1. Criar o Projeto no Firebase Console
+1. Acesse o [Firebase Console](https://console.firebase.google.com/) e crie um novo projeto.
+2. Em **Authentication** > **Sign-in method**, ative o provedor **E-mail/senha**.
+3. Em **Firestore Database**, crie o banco de dados em modo de produção.
+4. Na aba **Regras** do Firestore, copie e cole o conteúdo do arquivo `firestore.rules` deste repositório e clique em **Publicar**.
+
+### 2. Variáveis de Ambiente no AWS Amplify
+No console da AWS Amplify, acesse seu aplicativo > **Environment variables** (Variáveis de ambiente) e adicione:
+
+| Variável | Descrição |
+| :--- | :--- |
+| `VITE_FIREBASE_API_KEY` | Chave de API web do Firebase |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Domínio de autenticação (ex: `seu-projeto.firebaseapp.com`) |
+| `VITE_FIREBASE_PROJECT_ID` | ID do projeto no Firebase |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Bucket de armazenamento |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | ID do remetente de mensagens |
+| `VITE_FIREBASE_APP_ID` | ID do aplicativo Web Firebase |
 
 ---
 
-## 🚀 Como Executar Localmente
+## 👑 Como Configurar o Primeiro Administrador
 
-### Pré-requisitos
-- Node.js 18+ instalado
+Por segurança, o primeiro administrador deve ser inicializado pelo Firebase Console (impedindo que qualquer usuário altere seu próprio role no frontend):
 
-### Instalação e Execução
+1. No Firebase Console, vá em **Authentication** > **Users** > **Adicionar usuário**.
+2. Cadastre o e-mail e senha do administrador (ex: `admin@ricci.com`).
+3. Copie o **UID do Usuário** gerado.
+4. Vá em **Firestore Database** > Inicie a coleção **`users`**.
+5. Crie um documento com o **ID do documento = UID copiado**.
+6. Preencha os campos abaixo:
+```json
+{
+  "uid": "COLE_O_UID_AQUI",
+  "name": "Administrador Ricci",
+  "email": "admin@ricci.com",
+  "phone": "(11) 4475-6918",
+  "instrument": "Outro",
+  "role": "admin",
+  "totalHinos": 480,
+  "hinosConcluidos": 0,
+  "hinosEmProgresso": 0,
+  "progressoGeral": 0
+}
+```
+7. Pronto! Ao acessar `/login` com essas credenciais, o sistema reconhecerá o perfil como `admin` e redirecionará para `/admin`.
 
-`ash
+---
+
+## 🚀 Execução Local
+
+```bash
 # Clone o repositório
 git clone https://github.com/GabrielWire/ricci.git
 cd ricci
@@ -45,30 +113,7 @@ cd ricci
 npm install
 
 # Inicie o servidor de desenvolvimento
-npm run dev
-
-# Para acessar pelo celular na mesma rede Wi-Fi:
 npm run dev -- --host
-`
+```
 
-### Build de Produção
-
-`ash
-npm run build
-`
-Os arquivos otimizados serão gerados no diretório dist/.
-
----
-
-## ☁️ Deploy no AWS Amplify
-
-Este projeto está pronto para publicação no **AWS Amplify Hosting**:
-- **Framework**: Web / React + Vite
-- **Build Command**: 
-pm run build
-- **Base Directory**: dist
-- Arquivo mplify.yml já incluído na raiz do projeto.
-
----
-
-Feito com dedicação para a **RICCI - Academia de Música**.
+Acesse em seu navegador em `http://localhost:5173/`.

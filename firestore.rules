@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to verify if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper function to verify if authenticated user matches document owner
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // User can read their own profile, or admins can read any profile
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Admins can create new user documents (e.g. when registering students)
+      allow create: if isAdmin();
+
+      // Admins can delete users
+      allow delete: if isAdmin();
+
+      // Updates:
+      // - Admins can update any field (including role, totals, etc.)
+      // - Students can ONLY update allowed profile fields (name, phone, instrument),
+      //   never role, email, uid, or administrative aggregates
+      allow update: if isAdmin() || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email', 'uid', 'createdAt'])
+      );
+    }
+
+    // Student Progress Subcollection: students/{userId}/progress/{hinoId}
+    match /students/{userId}/progress/{hinoId} {
+      // Student can read their own progress, admin can read any student's progress
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Student can write/update their own progress, admin can write/update any student's progress
+      allow write: if isOwner(userId) || isAdmin();
+    }
+  }
+}
