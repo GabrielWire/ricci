@@ -1,6 +1,19 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Music, GraduationCap, Sun, Moon, LogOut, Users, BookOpen, User, LayoutDashboard, Shield, UserCheck } from 'lucide-react';
+import {
+  Music,
+  GraduationCap,
+  Sun,
+  Moon,
+  LogOut,
+  Users,
+  BookOpen,
+  User,
+  LayoutDashboard,
+  Shield,
+  UserCheck,
+  UserCog,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
@@ -24,6 +37,10 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
     return location.pathname.startsWith(path);
   };
 
+  const isAdmin = role === 'admin';
+  const isProfessor = role === 'professor';
+  const isStaff = isAdmin || isProfessor;
+
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -45,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                   </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  Portal Orquestra CCB &bull; Hinário 5
+                  Portal Orquestra CCB &bull; Hinário 5 &bull; MSA
                 </p>
               </div>
             </Link>
@@ -74,25 +91,39 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
 
           {/* Navigation Links based on Role */}
           {currentUser && (
-            <div className="flex items-center gap-1 w-full md:w-auto justify-center">
-              <nav className="flex p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold">
-                {(role === 'admin' || role === 'professor') ? (
+            <div className="flex items-center gap-1 w-full md:w-auto justify-center overflow-x-auto py-1">
+              <nav className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shrink-0">
+                {isStaff ? (
                   <>
                     <Link
                       to="/admin"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/admin')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>Painel Geral</span>
+                      <span>Painel</span>
                     </Link>
+
+                    {isAdmin && (
+                      <Link
+                        to="/admin/professores"
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
+                          isActive('/admin/professores')
+                            ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <UserCog className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Professores</span>
+                      </Link>
+                    )}
 
                     <Link
                       to="/admin/alunos"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/admin/alunos')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -103,8 +134,20 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                     </Link>
 
                     <Link
+                      to="/admin/metodos"
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
+                        isActive('/admin/metodos')
+                          ? 'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Music className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Métodos</span>
+                    </Link>
+
+                    <Link
                       to="/admin/msa"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/admin/msa')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -118,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                   <>
                     <Link
                       to="/aluno"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/aluno')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -129,8 +172,20 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                     </Link>
 
                     <Link
+                      to="/aluno/metodo"
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
+                        isActive('/aluno/metodo')
+                          ? 'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-2xs font-bold'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Music className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Meu Método</span>
+                    </Link>
+
+                    <Link
                       to="/aluno/msa"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/aluno/msa')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -142,7 +197,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
 
                     <Link
                       to="/aluno/progresso"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/aluno/progresso')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -154,7 +209,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
 
                     <Link
                       to="/aluno/perfil"
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
                         isActive('/aluno/perfil')
                           ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -181,9 +236,13 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                     {userData.name}
                   </span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                    {(role === 'admin' || role === 'professor') ? (
+                    {isAdmin ? (
                       <span className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-0.5">
-                        <Shield className="w-2.5 h-2.5" /> Admin
+                        <Shield className="w-2.5 h-2.5" /> Administrador
+                      </span>
+                    ) : isProfessor ? (
+                      <span className="text-purple-600 dark:text-purple-400 font-semibold flex items-center gap-0.5">
+                        <GraduationCap className="w-2.5 h-2.5" /> Professor
                       </span>
                     ) : (
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">

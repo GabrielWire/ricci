@@ -28,6 +28,12 @@ export interface UsuarioDoc {
   msaLessonsCompleted?: number;
   msaTotalLessons?: number;
 
+  // Instrument Method Aggregate fields
+  metodoNome?: string;
+  metodoPosicao?: string;
+  metodoProgresso?: number; // 0 - 100
+  metodoEstagioApto?: string; // 'Iniciante' | 'Apto RJM / Ensaio' | 'Apto Culto Oficial' | 'Apto Oficialização'
+
   createdAt?: any;
   updatedAt?: any;
 }

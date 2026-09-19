@@ -23,19 +23,20 @@ service cloud.firestore {
     // Users Collection
     match /users/{userId} {
       allow read: if isOwner(userId) || isTeacherOrAdmin();
-      allow create: if isTeacherOrAdmin();
+      allow create: if isAdmin() || (isTeacherOrAdmin() && request.resource.data.role == 'aluno');
       allow delete: if isAdmin();
       
       // Updates:
-      // - Teachers/Admins can update any field (including role, totals, MSA aggregates)
+      // - Teachers/Admins can update any field (including role, totals, MSA aggregates, Method aggregates)
       // - Students can ONLY update allowed profile fields (name, phone, instrument, hymn aggregates),
-      //   never role, email, uid, or MSA official aggregates
+      //   never role, email, uid, or MSA/Method official aggregates
       allow update: if isTeacherOrAdmin() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'role', 'email', 'uid', 'createdAt',
           'msaCurrentPhaseId', 'msaCurrentPhaseName', 'msaCurrentPhaseOrder',
-          'msaGeneralProgress', 'msaLessonsCompleted', 'msaTotalLessons'
+          'msaGeneralProgress', 'msaLessonsCompleted', 'msaTotalLessons',
+          'metodoNome', 'metodoPosicao', 'metodoProgresso', 'metodoEstagioApto'
         ])
       );
     }
@@ -58,6 +59,14 @@ service cloud.firestore {
     // Read: Student reads own progress, teachers/admins read any student's progress
     // Write: ONLY Teachers or Admins (official pedagogical grading cannot be altered by student)
     match /students/{userId}/msa_progress/{document=**} {
+      allow read: if isOwner(userId) || isTeacherOrAdmin();
+      allow write: if isTeacherOrAdmin();
+    }
+
+    // Student Instrument Method Progress Subcollection: students/{userId}/method_progress/{document=**}
+    // Read: Student reads own progress, teachers/admins read any student's method progress
+    // Write: ONLY Teachers or Admins
+    match /students/{userId}/method_progress/{document=**} {
       allow read: if isOwner(userId) || isTeacherOrAdmin();
       allow write: if isTeacherOrAdmin();
     }

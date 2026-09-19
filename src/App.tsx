@@ -8,12 +8,16 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AlunosList } from './pages/admin/AlunosList';
+import { ProfessoresList } from './pages/admin/ProfessoresList';
 import { AlunoDetalhes } from './pages/admin/AlunoDetalhes';
+import { MsaAdminHub } from './pages/admin/MsaAdminHub';
+import { MetodosAdminHub } from './pages/admin/MetodosAdminHub';
+
 import { AlunoDashboard } from './pages/aluno/AlunoDashboard';
+import { AlunoMsa } from './pages/aluno/AlunoMsa';
+import { AlunoMetodo } from './pages/aluno/AlunoMetodo';
 import { AlunoProgresso } from './pages/aluno/AlunoProgresso';
 import { AlunoPerfil } from './pages/aluno/AlunoPerfil';
-import { MsaAdminHub } from './pages/admin/MsaAdminHub';
-import { AlunoMsa } from './pages/aluno/AlunoMsa';
 
 import { Music, MapPin, Phone, ExternalLink } from 'lucide-react';
 
@@ -60,12 +64,20 @@ const MainLayout: React.FC = () => {
           {/* Root Redirect based on auth state */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Admin Protected Routes */}
+          {/* Admin / Professor Protected Routes */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={['admin', 'professor']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/professores"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ProfessoresList />
               </ProtectedRoute>
             }
           />
@@ -77,7 +89,15 @@ const MainLayout: React.FC = () => {
               </ProtectedRoute>
             }
           />
-                    <Route
+          <Route
+            path="/admin/metodos"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+                <MetodosAdminHub />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/msa"
             element={
               <ProtectedRoute allowedRoles={['admin', 'professor']}>
@@ -103,7 +123,15 @@ const MainLayout: React.FC = () => {
               </ProtectedRoute>
             }
           />
-                    <Route
+          <Route
+            path="/aluno/metodo"
+            element={
+              <ProtectedRoute allowedRoles={['aluno']}>
+                <AlunoMetodo />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/aluno/msa"
             element={
               <ProtectedRoute allowedRoles={['aluno']}>
@@ -170,7 +198,7 @@ const MainLayout: React.FC = () => {
           </div>
 
           <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
-            Portal de Gerenciamento da Orquestra CCB &bull; Hinário 5 &copy; {new Date().getFullYear()} RICCI Academia de Música.
+            Portal de Gerenciamento da Orquestra CCB &bull; Hinário 5 &bull; MSA &copy; {new Date().getFullYear()} RICCI Academia de Música.
           </p>
         </div>
       </footer>

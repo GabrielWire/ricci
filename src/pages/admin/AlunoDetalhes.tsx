@@ -38,14 +38,21 @@ import type {
 import { HINOS_DATA } from '../../data/hinosData';
 import { calcularTonalidadeInstrumento } from '../../data/instrumentsData';
 import { resolveInstrumento, INSTRUMENTOS_CATEGORIZADOS } from '../../utils/instrumentUtils';
+import { getStudentMethodProgress, updateStudentMethodProgress, calculateMethodStage } from '../../services/metodoService';
+import { getMetodosConfigForInstrumento } from '../../data/metodosInstrumentosData';
+import type { AlunoMetodoProgressoDoc } from '../../types/metodo';
+
 
 export const AlunoDetalhes: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active Tab: 'hinos' | 'msa'
-  const [activeTab, setActiveTab] = useState<'hinos' | 'msa'>(() => {
-    return searchParams.get('tab') === 'msa' ? 'msa' : 'hinos';
+  const [activeTab, setActiveTab] = useState<'hinos' | 'msa' | 'metodo'>(() => {
+    const t = searchParams.get('tab');
+    if (t === 'msa') return 'msa';
+    if (t === 'metodo') return 'metodo';
+    return 'hinos';
   });
 
   const [student, setStudent] = useState<UsuarioDoc | null>(null);
@@ -69,6 +76,16 @@ export const AlunoDetalhes: React.FC = () => {
   const [editingNotes, setEditingNotes] = useState<Record<string, string>>({});
 
   // Edit instrument mode for teacher
+    // Instrument Method State
+  const [, setMethodDoc] = useState<AlunoMetodoProgressoDoc | null>(null);
+  const [selectedMethodId, setSelectedMethodId] = useState('');
+  const [posicaoMetodo, setPosicaoMetodo] = useState('Página 1');
+  const [progressoMetodo, setProgressoMetodo] = useState(0);
+  const [estagiosAptos, setEstagiosAptos] = useState({ rjm: false, culto: false, oficializacao: false });
+  const [observacoesMetodo, setObservacoesMetodo] = useState('');
+  const [savingMetodo, setSavingMetodo] = useState(false);
+  const [feedbackMetodo, setFeedbackMetodo] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const [isEditingInstrument, setIsEditingInstrument] = useState(false);
   const [selectedInstOption, setSelectedInstOption] = useState('');
   const [savingInstrument, setSavingInstrument] = useState(false);
@@ -86,6 +103,26 @@ export const AlunoDetalhes: React.FC = () => {
           // Load Hymns Progress
           const map = await getStudentProgressMap(id);
           setProgressMap(map);
+
+                    // Load Instrument Method Progress
+          const methodProgressData = await getStudentMethodProgress(id);
+          const configInst = getMetodosConfigForInstrumento(studentData.instrument);
+          const defaultMetodo = configInst.metodos[0];
+
+          if (methodProgressData) {
+            setMethodDoc(methodProgressData);
+            setSelectedMethodId(methodProgressData.metodoId || defaultMetodo.id);
+            setPosicaoMetodo(methodProgressData.posicaoAtual || 'Página 1');
+            setProgressoMetodo(methodProgressData.progressoPercent || 0);
+            setEstagiosAptos(methodProgressData.estagiosAptos || { rjm: false, culto: false, oficializacao: false });
+            setObservacoesMetodo(methodProgressData.observacoesInstrutor || '');
+          } else {
+            setSelectedMethodId(defaultMetodo.id);
+            setPosicaoMetodo('Página 1');
+            setProgressoMetodo(0);
+            setEstagiosAptos({ rjm: false, culto: false, oficializacao: false });
+            setObservacoesMetodo('');
+          }
 
           // Load MSA Structure & Student Progress
           const phasesData = await listMsaPhases(false);
@@ -114,7 +151,52 @@ export const AlunoDetalhes: React.FC = () => {
     fetchAll();
   }, [id]);
 
-  const handleTabChange = (tab: 'hinos' | 'msa') => {
+    // Save Instrument Method Progress
+  const handleSaveMethod = async () => {
+    if (!student || !selectedMethodId) return;
+    setSavingMetodo(true);
+    setFeedbackMetodo(null);
+
+    const configInst = getMetodosConfigForInstrumento(student.instrument);
+    const chosenMethod = configInst.metodos.find((m) => m.id === selectedMethodId) || configInst.metodos[0];
+
+    try {
+      const updated = await updateStudentMethodProgress(student.uid, {
+        instrumentoNome: configInst.instrumentoNome,
+        metodoId: chosenMethod.id,
+        metodoNome: chosenMethod.nome,
+        posicaoAtual: posicaoMetodo,
+        progressoPercent: progressoMetodo,
+        estagiosAptos,
+        observacoesInstrutor: observacoesMetodo,
+      });
+
+      setMethodDoc(updated);
+      const stageApto = calculateMethodStage(estagiosAptos);
+
+      setStudent((prev) =>
+        prev
+          ? {
+              ...prev,
+              metodoNome: chosenMethod.nome,
+              metodoPosicao: posicaoMetodo,
+              metodoProgresso: progressoMetodo,
+              metodoEstagioApto: stageApto,
+            }
+          : null
+      );
+
+      setFeedbackMetodo({ type: 'success', text: 'Avaliação do método salva com sucesso!' });
+      setTimeout(() => setFeedbackMetodo(null), 3500);
+    } catch (err: any) {
+      console.error(err);
+      setFeedbackMetodo({ type: 'error', text: 'Erro ao salvar método: ' + (err?.message || 'Erro') });
+    } finally {
+      setSavingMetodo(false);
+    }
+  };
+
+  const handleTabChange = (tab: 'hinos' | 'msa' | 'metodo') => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -421,10 +503,263 @@ export const AlunoDetalhes: React.FC = () => {
             <GraduationCap className="w-4 h-4" />
             <span>Método MSA ({msaOverall?.generalProgress || student.msaGeneralProgress || 0}% Geral)</span>
           </button>
+
+          <button
+            onClick={() => handleTabChange('metodo')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'metodo'
+                ? 'bg-indigo-600 text-white shadow-2xs'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+            }`}
+          >
+            <Music className="w-4 h-4" />
+            <span>Método do Instrumento ({student.metodoEstagioApto || 'Iniciante'})</span>
+          </button>
         </div>
       </div>
 
-      {activeTab === 'msa' ? (
+            {activeTab === 'metodo' ? (
+        /* ==================================================================== */
+        /* TAB MÉTODO: ACOMPANHAMENTO DO MÉTODO DE INSTRUMENTO (CCB 2018)       */
+        /* ==================================================================== */
+        <div className="space-y-5">
+          {/* Feedback Alert */}
+          {feedbackMetodo && (
+            <div
+              className={`p-3.5 rounded-xl border text-xs sm:text-sm font-semibold flex items-center gap-2.5 animate-fadeIn ${
+                feedbackMetodo.type === 'success'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 text-emerald-800 dark:text-emerald-300'
+                  : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 text-rose-800 dark:text-rose-300'
+              }`}
+            >
+              {feedbackMetodo.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0" />
+              )}
+              <span>{feedbackMetodo.text}</span>
+            </div>
+          )}
+
+          {/* Method Evaluation Box */}
+          {(() => {
+            const configInst = getMetodosConfigForInstrumento(student.instrument);
+            const currentMethod = configInst.metodos.find((m) => m.id === selectedMethodId) || configInst.metodos[0];
+            const stageStatus = calculateMethodStage(estagiosAptos);
+
+            return (
+              <div className="space-y-5">
+                {/* Method Overview Card */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold text-indigo-700 dark:text-indigo-400">
+                          {configInst.familia} &bull; {instrumentoObj.nome} ({instrumentoObj.afinacao})
+                        </span>
+                      </div>
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                        Avaliação do Método de Instrumento
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Defina o método em estudo e valide os requisitos para Reuniões de Jovens, Culto Oficial e Oficialização.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs border ${
+                        stageStatus === 'Apto Oficialização'
+                          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800'
+                          : stageStatus === 'Apto Culto Oficial'
+                          ? 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800'
+                          : stageStatus === 'Apto RJM / Ensaio'
+                          ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200 border-amber-300 dark:border-amber-800'
+                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                      }`}>
+                        Estágio Atual: {stageStatus}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Form Controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Method Selector */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Método Oficial em Estudo:
+                      </label>
+                      <select
+                        value={selectedMethodId}
+                        onChange={(e) => setSelectedMethodId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm font-bold text-slate-900 dark:text-white cursor-pointer shadow-2xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      >
+                        {configInst.metodos.map((m) => (
+                          <option key={m.id} value={m.id} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
+                            {m.nome} {m.subtitulo ? `(${m.subtitulo})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Current Position */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Posição Atual (Página / Lição):
+                      </label>
+                      <input
+                        type="text"
+                        value={posicaoMetodo}
+                        onChange={(e) => setPosicaoMetodo(e.target.value)}
+                        placeholder="Ex: Página 25, Lição 14"
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm text-slate-900 dark:text-white font-medium shadow-2xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Progress Slider */}
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-slate-700 dark:text-slate-300">Progresso Estimado no Método</span>
+                      <span className="font-mono text-indigo-700 dark:text-indigo-400 text-sm">{progressoMetodo}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={progressoMetodo}
+                      onChange={(e) => setProgressoMetodo(Number(e.target.value))}
+                      className="w-full accent-indigo-600 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Stage Checkpoints */}
+                  <div className="space-y-3 pt-2">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Requisitos Mínimos CCB (Marcar quando apto):
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Checkpoint 1: RJM */}
+                      <label className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                        estagiosAptos.rjm
+                          ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700'
+                          : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>🧒 RJM / Ensaio</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={estagiosAptos.rjm}
+                              onChange={(e) => setEstagiosAptos((prev) => ({ ...prev, rjm: e.target.checked }))}
+                              className="w-4 h-4 rounded text-amber-600 accent-amber-600 cursor-pointer"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-800 dark:text-slate-200 font-bold">
+                            {currentMethod.exigencias.rjm.descricao}
+                          </p>
+                        </div>
+                        {configInst.observacoesGerais?.rjm && (
+                          <span className="text-[10px] text-amber-700 dark:text-amber-300 mt-2 block">
+                            Obs: {configInst.observacoesGerais.rjm}
+                          </span>
+                        )}
+                      </label>
+
+                      {/* Checkpoint 2: Culto Oficial */}
+                      <label className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                        estagiosAptos.culto
+                          ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-700'
+                          : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>🏛️ Cultos Oficiais</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={estagiosAptos.culto}
+                              onChange={(e) => setEstagiosAptos((prev) => ({ ...prev, culto: e.target.checked }))}
+                              className="w-4 h-4 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-800 dark:text-slate-200 font-bold">
+                            {currentMethod.exigencias.culto.descricao}
+                          </p>
+                        </div>
+                        {configInst.observacoesGerais?.culto && (
+                          <span className="text-[10px] text-indigo-700 dark:text-indigo-300 mt-2 block">
+                            Obs: {configInst.observacoesGerais.culto}
+                          </span>
+                        )}
+                      </label>
+
+                      {/* Checkpoint 3: Oficializacao */}
+                      <label className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                        estagiosAptos.oficializacao
+                          ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700'
+                          : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>🎓 Oficialização</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={estagiosAptos.oficializacao}
+                              onChange={(e) => setEstagiosAptos((prev) => ({ ...prev, oficializacao: e.target.checked }))}
+                              className="w-4 h-4 rounded text-emerald-600 accent-emerald-600 cursor-pointer"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-800 dark:text-slate-200 font-bold">
+                            {currentMethod.exigencias.oficializacao.descricao}
+                          </p>
+                        </div>
+                        {configInst.observacoesGerais?.oficializacao && (
+                          <span className="text-[10px] text-emerald-700 dark:text-emerald-300 mt-2 block">
+                            Obs: {configInst.observacoesGerais.oficializacao}
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Teacher Notes */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Orientações e Observações Pedagógicas do Instrutor:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={observacoesMetodo}
+                      onChange={(e) => setObservacoesMetodo(e.target.value)}
+                      placeholder="Ex: Aluno está com boa embocadura. Próximo objetivo: aperfeiçoar passagens rápidas das lições 20 a 25..."
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={handleSaveMethod}
+                      disabled={savingMetodo}
+                      className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition-all shadow-2xs flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      {savingMetodo ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      <span>Salvar Avaliação do Método</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      ) : activeTab === 'msa' ? (
         /* ==================================================================== */
         /* TAB MSA: ACOMPANHAMENTO INDIVIDUAL DAS FASES & LIÇÕES                */
         /* ==================================================================== */
