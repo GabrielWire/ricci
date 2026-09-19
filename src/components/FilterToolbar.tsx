@@ -5,7 +5,6 @@ export interface FiltrosState {
   busca: string;
   dificuldade: string;
   acidentes: string;
-  tipoAcidente: string;
   categoria: string;
   status: string;
   ordenacao: 'numero_asc' | 'numero_desc' | 'dif_facil' | 'dif_dificil' | 'acidentes_asc' | 'acidentes_desc';
@@ -32,13 +31,12 @@ export const FilterToolbar: React.FC<Props> = ({
     filtros.busca !== '' ||
     filtros.dificuldade !== 'todas' ||
     filtros.acidentes !== 'todos' ||
-    filtros.tipoAcidente !== 'todos' ||
     filtros.categoria !== 'todas' ||
     filtros.status !== 'todos' ||
     filtros.ordenacao !== 'numero_asc';
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5 transition-colors duration-200">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5 transition-colors duration-200">
       
       {/* Search and Sort (PrimeFaces Toolbar) */}
       <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -50,7 +48,7 @@ export const FilterToolbar: React.FC<Props> = ({
             placeholder="Buscar por número (ex: 247) ou título..."
             value={filtros.busca}
             onChange={(e) => setFiltros((prev) => ({ ...prev, busca: e.target.value }))}
-            className="w-full pl-10 pr-10 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-2xs"
           />
           {filtros.busca && (
             <button
@@ -69,14 +67,14 @@ export const FilterToolbar: React.FC<Props> = ({
             <select
               value={filtros.ordenacao}
               onChange={(e) => setFiltros((prev) => ({ ...prev, ordenacao: e.target.value as any }))}
-              className="w-full pl-8.5 pr-8 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 text-xs sm:text-sm appearance-none focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all"
+              className="w-full pl-8.5 pr-8 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm appearance-none focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all shadow-2xs"
             >
-              <option value="numero_asc">Ordem: Número crescente (1 → 480)</option>
-              <option value="numero_desc">Ordem: Número decrescente (480 → 1)</option>
-              <option value="dif_facil">Ordem: Mais Fáceis primeiro</option>
-              <option value="dif_dificil">Ordem: Mais Difíceis primeiro</option>
-              <option value="acidentes_asc">Ordem: Menos acidentes (0 → 7)</option>
-              <option value="acidentes_desc">Ordem: Mais acidentes (7 → 0)</option>
+              <option value="numero_asc" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Ordem: Número crescente (1 → 480)</option>
+              <option value="numero_desc" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Ordem: Número decrescente (480 → 1)</option>
+              <option value="dif_facil" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Ordem: Mais Fáceis primeiro</option>
+              <option value="dif_dificil" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Ordem: Mais Difíceis primeiro</option>
+              <option value="acidentes_asc" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Ordem: Menos acidentes (0 → 7)</option>
+              <option value="acidentes_desc" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Ordem: Mais acidentes (7 → 0)</option>
             </select>
           </div>
 
@@ -84,7 +82,7 @@ export const FilterToolbar: React.FC<Props> = ({
             <button
               onClick={onResetFiltros}
               title="Limpar filtros"
-              className="p-2 sm:px-3 sm:py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-colors shrink-0 flex items-center gap-1 text-xs font-semibold"
+              className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-colors shrink-0 flex items-center gap-1 text-xs font-semibold shadow-2xs"
             >
               <RotateCcw className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span className="hidden sm:inline">Limpar</span>
@@ -93,27 +91,27 @@ export const FilterToolbar: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Filter Selects Grid (PrimeFaces Form Controls) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2.5 pt-2.5 border-t border-slate-200 dark:border-slate-800/80 text-xs">
+      {/* Filter Selects Grid (PrimeFaces Form Controls - 4 clean columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 text-xs">
         
-        {/* Dificuldade */}
+        {/* 1. Dificuldade */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
             Dificuldade
           </label>
           <select
             value={filtros.dificuldade}
             onChange={(e) => setFiltros((prev) => ({ ...prev, dificuldade: e.target.value }))}
-            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs font-medium cursor-pointer"
           >
-            <option value="todas">Todas</option>
-            <option value="Fácil">🟢 Fáceis</option>
-            <option value="Médio">🟡 Médios</option>
-            <option value="Difícil">🔴 Difíceis</option>
+            <option value="todas" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Todas as dificuldades</option>
+            <option value="Fácil" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">🟢 Fáceis</option>
+            <option value="Médio" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">🟡 Médios</option>
+            <option value="Difícil" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">🔴 Difíceis</option>
           </select>
         </div>
 
-        {/* Acidentes no Instrumento */}
+        {/* 2. Acidentes no Instrumento (Specific Accidentals Only) */}
         <div>
           <label className="block text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1 truncate" title={`Acidentes no ${instrumentoNome}`}>
             Acidentes ({instrumentoNome})
@@ -121,79 +119,69 @@ export const FilterToolbar: React.FC<Props> = ({
           <select
             value={filtros.acidentes}
             onChange={(e) => setFiltros((prev) => ({ ...prev, acidentes: e.target.value }))}
-            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-indigo-300 dark:border-indigo-500/40 text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium"
+            className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-indigo-300 dark:border-indigo-500/50 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs font-medium cursor-pointer"
           >
-            <option value="todos">Todos (0 a 7)</option>
-            <option value="0">0 acidentes (♮ Natural)</option>
-            <option value="1">1 acidente</option>
-            <option value="2">2 acidentes</option>
-            <option value="3">3 acidentes</option>
-            <option value="4+">4 ou mais acidentes</option>
-            <option value="1b">1♭ (1 Bemol)</option>
-            <option value="2b">2♭ (2 Bemóis)</option>
-            <option value="3b">3♭ (3 Bemóis)</option>
-            <option value="4b">4♭ (4 Bemóis)</option>
-            <option value="1s">1♯ (1 Sustenido)</option>
-            <option value="2s">2♯ (2 Sustenidos)</option>
-            <option value="3s">3♯ (3 Sustenidos)</option>
+            <option value="todos" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Todas as armaduras</option>
+            <option value="0" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">0 acidentes (♮ Natural)</option>
+            
+            <optgroup label="── Bemóis (♭) ──" className="bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300 font-bold">
+              <option value="1b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">1 Bemol (1♭)</option>
+              <option value="2b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">2 Bemóis (2♭)</option>
+              <option value="3b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">3 Bemóis (3♭)</option>
+              <option value="4b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">4 Bemóis (4♭)</option>
+              <option value="5b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">5 Bemóis (5♭)</option>
+              <option value="6b" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">6 Bemóis (6♭)</option>
+            </optgroup>
+
+            <optgroup label="── Sustenidos (♯) ──" className="bg-slate-50 text-slate-600 dark:bg-slate-900 dark:text-slate-300 font-bold">
+              <option value="1s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">1 Sustenido (1♯)</option>
+              <option value="2s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">2 Sustenidos (2♯)</option>
+              <option value="3s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">3 Sustenidos (3♯)</option>
+              <option value="4s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">4 Sustenidos (4♯)</option>
+              <option value="5s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">5 Sustenidos (5♯)</option>
+              <option value="6s" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">6 Sustenidos (6♯)</option>
+            </optgroup>
           </select>
         </div>
 
-        {/* Tipo de Armadura */}
+        {/* 3. Categoria */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-            Tipo Armadura
-          </label>
-          <select
-            value={filtros.tipoAcidente}
-            onChange={(e) => setFiltros((prev) => ({ ...prev, tipoAcidente: e.target.value }))}
-            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-          >
-            <option value="todos">Todos</option>
-            <option value="bemois">♭ Com Bemóis</option>
-            <option value="sustenidos">♯ Com Sustenidos</option>
-            <option value="natural">♮ Naturais (0)</option>
-          </select>
-        </div>
-
-        {/* Categoria */}
-        <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
             Categoria
           </label>
           <select
             value={filtros.categoria}
             onChange={(e) => setFiltros((prev) => ({ ...prev, categoria: e.target.value }))}
-            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs font-medium cursor-pointer"
           >
-            <option value="todas">Todas as categorias</option>
-            <option value="culto">Culto Oficial (1 - 430)</option>
-            <option value="jovens">Jovens e Menores (431 - 480)</option>
-            <option value="meia_hora">Sugestão Meia-Hora</option>
-            <option value="coros">Coros Avulsos (1 - 6)</option>
+            <option value="todas" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Todas as categorias</option>
+            <option value="culto" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Culto Oficial (1 - 430)</option>
+            <option value="jovens" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Jovens e Menores (431 - 480)</option>
+            <option value="meia_hora" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Sugestão Meia-Hora</option>
+            <option value="coros" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Coros Avulsos (1 - 6)</option>
           </select>
         </div>
 
-        {/* Status */}
-        <div className="col-span-2 sm:col-span-1">
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+        {/* 4. Status de Estudo */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
             Meu Estudo
           </label>
           <select
             value={filtros.status}
             onChange={(e) => setFiltros((prev) => ({ ...prev, status: e.target.value }))}
-            className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs font-medium cursor-pointer"
           >
-            <option value="todos">Todos</option>
-            <option value="aprendido">✅ Já Aprendi</option>
-            <option value="nao_iniciado">⏳ Não Aprendidos</option>
+            <option value="todos" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">Todos os hinos</option>
+            <option value="aprendido" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">✅ Já Aprendi</option>
+            <option value="nao_iniciado" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">⏳ Não Aprendidos</option>
           </select>
         </div>
 
       </div>
 
       {/* Counter summary */}
-      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1 pt-1">
         <span>
           Exibindo <strong className="text-indigo-600 dark:text-indigo-400 font-bold">{totalFiltrados}</strong> de {totalHinos} hinos
         </span>

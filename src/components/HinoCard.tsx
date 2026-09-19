@@ -26,22 +26,23 @@ export const HinoCard: React.FC<Props> = ({
   // Transposed accidentals for instrument
   const transposto = calcularTonalidadeInstrumento(hino.acidentes, instrumento);
 
+  // PrimeFaces Jakarta severity styles for dots and accents
   const getDifficultyStyles = () => {
     if (dif === 'Fácil') {
       return {
-        dot: 'bg-emerald-500',
-        ring: 'ring-emerald-500/20',
+        dot: 'bg-[#22c55e] dark:bg-[#10b981] shadow-xs shadow-emerald-500/40',
+        ring: 'ring-2 ring-emerald-400/40 dark:ring-emerald-400/50',
       };
     }
     if (dif === 'Médio') {
       return {
-        dot: 'bg-amber-500',
-        ring: 'ring-amber-500/20',
+        dot: 'bg-[#f59e0b] dark:bg-[#fbbf24] shadow-xs shadow-amber-500/40',
+        ring: 'ring-2 ring-amber-400/40 dark:ring-amber-400/50',
       };
     }
     return {
-      dot: 'bg-rose-500',
-      ring: 'ring-rose-500/20',
+      dot: 'bg-[#ef4444] dark:bg-[#f87171] shadow-xs shadow-rose-500/40',
+      ring: 'ring-2 ring-rose-400/40 dark:ring-rose-400/50',
     };
   };
 
@@ -63,10 +64,10 @@ Tom Real (Dó): ${hino.tonalidadeEfeito} (${hino.armadura})`}
           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500/60 hover:shadow-xs hover:-translate-y-0.5'
       }`}
     >
-      {/* Top row: Difficulty indicator & Checkbox */}
+      {/* Top row: Difficulty indicator dot & Checkbox */}
       <div className="w-full flex items-center justify-between">
         <span
-          className={`w-2 h-2 rounded-full ${styles.dot} ring-2 ${styles.ring}`}
+          className={`w-2.5 h-2.5 rounded-full ${styles.dot} ${styles.ring}`}
           title={`Dificuldade: ${dif}`}
         />
 
@@ -74,7 +75,7 @@ Tom Real (Dó): ${hino.tonalidadeEfeito} (${hino.armadura})`}
           className={`w-4 h-4 rounded-full flex items-center justify-center border transition-all ${
             isAprendido
               ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
-              : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-transparent group-hover:border-indigo-400'
+              : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-transparent group-hover:border-indigo-400'
           }`}
         >
           <Check className="w-3 h-3 stroke-[3]" />

@@ -60,7 +60,6 @@ export const App: React.FC = () => {
     busca: '',
     dificuldade: 'todas',
     acidentes: 'todos',
-    tipoAcidente: 'todos',
     categoria: 'todas',
     status: 'todos',
     ordenacao: 'numero_asc',
@@ -103,7 +102,6 @@ export const App: React.FC = () => {
       busca: '',
       dificuldade: 'todas',
       acidentes: 'todos',
-      tipoAcidente: 'todos',
       categoria: 'todas',
       status: 'todos',
       ordenacao: 'numero_asc',
@@ -141,39 +139,28 @@ export const App: React.FC = () => {
       });
     }
 
-    // 3. Accidentals FILTERED BY THE SELECTED INSTRUMENT
+    // 3. Accidentals FILTERED BY SPECIFIC ACCIDENTAL ON THE SELECTED INSTRUMENT
     if (filtros.acidentes !== 'todos') {
       list = list.filter((h) => {
         const trans = calcularTonalidadeInstrumento(h.acidentes, selectedInstrumento);
-        const qtd = trans.totalAcidentes;
-        if (filtros.acidentes === '0') return qtd === 0;
-        if (filtros.acidentes === '1') return qtd === 1;
-        if (filtros.acidentes === '2') return qtd === 2;
-        if (filtros.acidentes === '3') return qtd === 3;
-        if (filtros.acidentes === '4+') return qtd >= 4;
+        if (filtros.acidentes === '0') return trans.armadura === '0';
         if (filtros.acidentes === '1b') return trans.armadura === '1♭';
         if (filtros.acidentes === '2b') return trans.armadura === '2♭';
         if (filtros.acidentes === '3b') return trans.armadura === '3♭';
         if (filtros.acidentes === '4b') return trans.armadura === '4♭';
+        if (filtros.acidentes === '5b') return trans.armadura === '5♭';
+        if (filtros.acidentes === '6b') return trans.armadura === '6♭';
         if (filtros.acidentes === '1s') return trans.armadura === '1♯';
         if (filtros.acidentes === '2s') return trans.armadura === '2♯';
         if (filtros.acidentes === '3s') return trans.armadura === '3♯';
+        if (filtros.acidentes === '4s') return trans.armadura === '4♯';
+        if (filtros.acidentes === '5s') return trans.armadura === '5♯';
+        if (filtros.acidentes === '6s') return trans.armadura === '6♯';
         return true;
       });
     }
 
-    // 4. Accidental type (bemois, sustenidos, natural) FILTERED BY THE SELECTED INSTRUMENT
-    if (filtros.tipoAcidente !== 'todos') {
-      list = list.filter((h) => {
-        const trans = calcularTonalidadeInstrumento(h.acidentes, selectedInstrumento);
-        if (filtros.tipoAcidente === 'bemois') return trans.armadura.includes('♭');
-        if (filtros.tipoAcidente === 'sustenidos') return trans.armadura.includes('♯');
-        if (filtros.tipoAcidente === 'natural') return trans.totalAcidentes === 0;
-        return true;
-      });
-    }
-
-    // 5. Category
+    // 4. Category
     if (filtros.categoria !== 'todas') {
       if (filtros.categoria === 'culto') list = list.filter((h) => h.categoria === 'Culto Oficial');
       else if (filtros.categoria === 'jovens') list = list.filter((h) => h.categoria === 'Reunião de Jovens e Menores');
@@ -181,7 +168,7 @@ export const App: React.FC = () => {
       else if (filtros.categoria === 'coros') list = list.filter((h) => h.categoria === 'Coros');
     }
 
-    // 6. Student Status
+    // 5. Student Status
     if (filtros.status !== 'todos') {
       list = list.filter((h) => {
         const reg = registros[h.numero];
@@ -192,7 +179,7 @@ export const App: React.FC = () => {
       });
     }
 
-    // 7. Sorting
+    // 6. Sorting
     const difWeights: Record<string, number> = { 'Fácil': 1, 'Médio': 2, 'Difícil': 3 };
 
     list.sort((a, b) => {
@@ -295,14 +282,14 @@ export const App: React.FC = () => {
                   <div className="flex flex-wrap items-center justify-center gap-2.5 pt-4 pb-8">
                     <button
                       onClick={() => setVisibleCount((prev) => prev + 60)}
-                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 active:scale-95"
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                       <ChevronDown className="w-4 h-4" />
                       Mostrar mais 60 hinos
                     </button>
                     <button
                       onClick={() => setVisibleCount(hinosFiltrados.length)}
-                      className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95 shadow-2xs"
+                      className="px-4 py-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all active:scale-95 shadow-2xs cursor-pointer"
                     >
                       Mostrar todos ({hinosFiltrados.length})
                     </button>
@@ -318,7 +305,7 @@ export const App: React.FC = () => {
                 </p>
                 <button
                   onClick={handleResetFiltros}
-                  className="mt-3 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-2xs"
+                  className="mt-3 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-2xs cursor-pointer"
                 >
                   Limpar Filtros
                 </button>
