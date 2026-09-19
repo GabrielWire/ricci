@@ -12,18 +12,27 @@ import {
   Calendar,
   AlertCircle,
   HelpCircle,
+  Sliders,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getStudentMethodProgress } from '../../services/metodoService';
+import {
+  getStudentMethodProgress,
+  listStudentMethodLessons,
+} from '../../services/metodoService';
 import { getMetodosConfigForInstrumento } from '../../data/metodosInstrumentosData';
 import { resolveInstrumento } from '../../utils/instrumentUtils';
-import type { AlunoMetodoProgressoDoc, MetodoOpcaoDef } from '../../types/metodo';
+import type {
+  AlunoMetodoProgressoDoc,
+  MetodoOpcaoDef,
+  MetodoLicaoDoc,
+} from '../../types/metodo';
 
 export const AlunoMetodo: React.FC = () => {
   const { userData, currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [progresso, setProgresso] = useState<AlunoMetodoProgressoDoc | null>(null);
+  const [metodoLessons, setMetodoLessons] = useState<MetodoLicaoDoc[]>([]);
   const [activeMetodoTab, setActiveMetodoTab] = useState<string>('');
 
   const inst = useMemo(() => {
@@ -39,10 +48,16 @@ export const AlunoMetodo: React.FC = () => {
     const fetchMetodo = async () => {
       setLoading(true);
       try {
-        const data = await getStudentMethodProgress(currentUser.uid);
-        setProgresso(data);
-        if (data?.metodoId) {
-          setActiveMetodoTab(data.metodoId);
+        const [progressData, lessonsData] = await Promise.all([
+          getStudentMethodProgress(currentUser.uid),
+          listStudentMethodLessons(currentUser.uid),
+        ]);
+
+        setProgresso(progressData);
+        setMetodoLessons(lessonsData);
+
+        if (progressData?.metodoId) {
+          setActiveMetodoTab(progressData.metodoId);
         } else if (metodosConfig.metodos.length > 0) {
           setActiveMetodoTab(metodosConfig.metodos[0].id);
         }
@@ -100,6 +115,17 @@ export const AlunoMetodo: React.FC = () => {
 
   const badge = getStageBadge();
 
+  // Posicao Atual (Página X, Lição Y)
+  const posicaoAtualCalculada =
+    progresso?.posicaoAtual ||
+    (metodoLessons.length > 0
+      ? `Página ${metodoLessons[metodoLessons.length - 1].numeroPagina}, Lição ${metodoLessons[metodoLessons.length - 1].numeroLicao}`
+      : 'Página 1, Lição 1');
+
+  const licoesConcluidas = metodoLessons.filter(
+    (l) => l.status === 'Concluído' || l.progress === 100
+  ).length;
+
   return (
     <div className="space-y-6">
       {/* Top Banner */}
@@ -120,7 +146,7 @@ export const AlunoMetodo: React.FC = () => {
               Plano de Estudos do Instrumento
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Consulte a posição das suas lições de método e os critérios oficiais da CCB para tocar em Reunião de Jovens, Culto Oficial e Oficialização.
+              Consulte seu progresso página por página e lição por lição, com as notas e parecer do seu professor.
             </p>
           </div>
 
@@ -161,8 +187,12 @@ export const AlunoMetodo: React.FC = () => {
               </h3>
 
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
+                <span className="flex items-center gap-1">
+                  Posição Atual: <strong className="font-bold text-purple-600 dark:text-purple-400">{posicaoAtualCalculada}</strong>
+                </span>
+                <span>&bull;</span>
                 <span>
-                  Posição Atual: <strong className="font-bold text-purple-600 dark:text-purple-400">{progresso.posicaoAtual || 'Em início'}</strong>
+                  Lições Concluídas: <strong className="font-bold text-slate-900 dark:text-white font-mono">{licoesConcluidas} de {metodoLessons.length}</strong>
                 </span>
                 <span>&bull;</span>
                 <span className="flex items-center gap-1 text-slate-400">
@@ -203,7 +233,7 @@ export const AlunoMetodo: React.FC = () => {
           <div className="mt-3.5 p-3.5 sm:p-4 rounded-xl bg-purple-50/60 dark:bg-slate-850 border border-purple-200 dark:border-purple-800 shadow-2xs">
             <div className="flex items-center gap-1.5 text-xs font-bold text-purple-800 dark:text-purple-300 mb-1">
               <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span>Orientações do Instrutor:</span>
+              <span>Orientações Gerais do Instrutor:</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
               "{progresso.observacoesInstrutor}"
@@ -424,6 +454,113 @@ export const AlunoMetodo: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* MINHAS LIÇÕES AVALIADAS NO MÉTODO (PÁGINA + LIÇÃO) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Sliders className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <span>Minhas Lições do Método ({metodoLessons.length})</span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Histórico de lições com status, notas e parecer pedagógico registrado pelo seu professor.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              {licoesConcluidas} Concluídas
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              {metodoLessons.length - licoesConcluidas} Em andamento
+            </span>
+          </div>
+        </div>
+
+        {metodoLessons.length === 0 ? (
+          <div className="py-10 text-center space-y-2">
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              Nenhuma lição avaliada registrada ainda.
+            </p>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Assim que o seu instrutor avaliar e salvar o seu progresso na primeira página e lição, ela aparecerá aqui com as orientações de estudo.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+            {metodoLessons.map((lesson) => {
+              const isDone = lesson.status === 'Concluído' || lesson.progress === 100;
+              const isInProgress = lesson.status === 'Em andamento' || (lesson.progress > 0 && lesson.progress < 100);
+
+              return (
+                <div
+                  key={lesson.id}
+                  className={`p-4 rounded-xl border transition-all space-y-2.5 shadow-2xs ${
+                    isDone
+                      ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60'
+                      : isInProgress
+                      ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60'
+                      : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-black px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                        Pág. {lesson.numeroPagina} &bull; Lição {lesson.numeroLicao}
+                      </span>
+                      {lesson.titulo && (
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {lesson.titulo}
+                        </span>
+                      )}
+                    </div>
+
+                    <span
+                      className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full border ${
+                        isDone
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300'
+                          : isInProgress
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-300'
+                      }`}
+                    >
+                      {lesson.status}
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div>
+                    <div className="flex justify-between text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 mb-1">
+                      <span>Domínio da Lição</span>
+                      <span>{lesson.progress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-300 dark:border-slate-700">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          isDone ? 'bg-emerald-600' : 'bg-purple-600'
+                        }`}
+                        style={{ width: `${lesson.progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Teacher Feedback Notes */}
+                  {lesson.teacherNotes ? (
+                    <div className="p-2.5 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-400">
+                        <MessageSquare className="w-3 h-3" />
+                        <span>Orientação do Professor:</span>
+                      </div>
+                      <p className="italic font-medium">"{lesson.teacherNotes}"</p>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
