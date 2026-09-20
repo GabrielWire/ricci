@@ -278,7 +278,7 @@ export const ProfessoresList: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">Novo Professor / Instrutor</h3>
-                  <p className="text-[11px] text-slate-400">Acesso pedagógico ao portal Ricci</p>
+                  <p className="text-[11px] text-slate-400">Acesso pedagógico ao portal CCB Música</p>
                 </div>
               </div>
               <button

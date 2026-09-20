@@ -27,7 +27,7 @@ export const BackupModal: React.FC<Props> = ({
 
   const handleExportJson = () => {
     const backupObj = {
-      app: 'RICCI Academia de Música - CCB Hinário 5',
+      app: 'Portal CCB Música - Hinário 5, MSA e Métodos',
       instrumentoId: instrumento.id,
       instrumentoNome: instrumento.nome,
       exportadoEm: new Date().toISOString(),

@@ -84,10 +84,10 @@ export const Login: React.FC = () => {
             <Music className="w-7 h-7" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            RICCI <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">PORTAL</span>
+            CCB <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">MÚSICA</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Preparatório para a Orquestra CCB &bull; Academia de Música
+            Portal de Estudos da Orquestra CCB &bull; Hinário 5, MSA e Métodos
           </p>
         </div>
 
@@ -180,9 +180,14 @@ export const Login: React.FC = () => {
         </div>
 
         {/* Footer Note */}
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-          Ainda não tem acesso? Solicite o cadastro ao professor ou administração da escola.
-        </p>
+        <div className="text-center space-y-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Ainda não tem acesso? Solicite o cadastro ao seu instrutor ou examinador.
+          </p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            Produção independente para auxílio aos estudos musicais &bull; Sem vínculo institucional oficial.
+          </p>
+        </div>
 
       </div>
 

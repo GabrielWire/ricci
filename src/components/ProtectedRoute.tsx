@@ -17,7 +17,7 @@ export const ProtectedRoute: React.FC<Props> = ({ children, allowedRoles }) => {
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400 mb-3" />
         <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-          Carregando portal RICCI...
+          Carregando portal CCB...
         </p>
       </div>
     );

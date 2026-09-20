@@ -49,7 +49,7 @@ export const AdminDashboard: React.FC = () => {
             Área Administrativa &bull; Gestão Pedagógica
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">
-            Painel da Orquestra RICCI
+            Painel da Orquestra CCB
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
             Acompanhe o desenvolvimento de cada aluno no repertório do Hinário 5 da CCB.

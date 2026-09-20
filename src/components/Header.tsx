@@ -55,14 +55,14 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
               <div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="font-extrabold tracking-tight text-indigo-700 dark:text-indigo-400 text-base sm:text-lg uppercase">
-                    RICCI
+                    CCB
                   </span>
                   <span className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-300 dark:border-slate-700 pl-2">
-                    Academia de Música
+                    Música &amp; Orquestra
                   </span>
                 </div>
                 <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  Portal Orquestra CCB &bull; Hinário 5 &bull; MSA
+                  Portal de Estudos Musicais &bull; Hinário 5 &bull; MSA &bull; Métodos
                 </p>
               </div>
             </Link>

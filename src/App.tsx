@@ -19,7 +19,7 @@ import { AlunoMetodo } from './pages/aluno/AlunoMetodo';
 import { AlunoProgresso } from './pages/aluno/AlunoProgresso';
 import { AlunoPerfil } from './pages/aluno/AlunoPerfil';
 
-import { Music, MapPin, Phone, ExternalLink } from 'lucide-react';
+import { Music } from 'lucide-react';
 
 const STORAGE_KEY_THEME = 'ricci_theme';
 
@@ -165,41 +165,32 @@ const MainLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold shrink-0">
                 <Music className="w-4 h-4" />
               </div>
               <div>
                 <span className="font-extrabold text-indigo-700 dark:text-indigo-400 text-sm tracking-tight block">
-                  RICCI - ACADEMIA DE MÚSICA
+                  CCB - ESTUDOS MUSICAIS
                 </span>
-                <span className="text-slate-400 text-[11px]">Santo André - SP</span>
+                <span className="text-slate-400 text-[11px]">Orquestra &bull; Hinário 5 &bull; MSA &bull; Métodos</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-[11px]">
-              <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
-                <MapPin className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>Av. Das Nações, 749</span>
-              </div>
-              <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
-                <Phone className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>(11) 4475-6918</span>
-              </div>
-              <a
-                href="https://www.ricciacademiademusica.com"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors font-semibold"
-              >
-                <span>ricciacademiademusica.com</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                Produção Independente
+              </span>
             </div>
           </div>
 
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
-            Portal de Gerenciamento da Orquestra CCB &bull; Hinário 5 &bull; MSA &copy; {new Date().getFullYear()} RICCI Academia de Música.
-          </p>
+          <div className="text-center space-y-1">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Produção independente desenvolvida para auxílio aos candidatos, músicos e instrutores nos estudos musicais da Congregação Cristã no Brasil. Sem vínculo institucional oficial.
+            </p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              &copy; {new Date().getFullYear()} CCB Música &bull; Hinário 5 &bull; MSA &bull; Métodos de Instrumentos.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

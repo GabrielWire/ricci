@@ -1,6 +1,6 @@
-# RICCI - Portal de Gerenciamento da Orquestra CCB (Hinário 5)
+# CCB - Portal de Estudos Musicais & Orquestra (Hinário 5, MSA & Métodos)
 
-Web application interativa desenvolvida para a **RICCI - Academia de Música** (Santo André/SP), voltada para a gestão pedagógica e acompanhamento de alunos que estudam para ingressar na orquestra da **Congregação Cristã no Brasil (CCB)**.
+Web application interativa desenvolvida como **produção independente** voltada para a gestão pedagógica e acompanhamento de alunos, candidatos e instrutores que estudam para ingressar ou se aperfeiçoar na orquestra da **Congregação Cristã no Brasil (CCB)**. Sem vínculo institucional oficial.
 
 ---
 
@@ -79,7 +79,7 @@ No console da AWS Amplify, acesse seu aplicativo > **Environment variables** (Va
 Por segurança, o primeiro administrador deve ser inicializado pelo Firebase Console (impedindo que qualquer usuário altere seu próprio role no frontend):
 
 1. No Firebase Console, vá em **Authentication** > **Users** > **Adicionar usuário**.
-2. Cadastre o e-mail e senha do administrador (ex: `admin@ricci.com`).
+2. Cadastre o e-mail e senha do administrador (ex: `admin@exemplo.com`).
 3. Copie o **UID do Usuário** gerado.
 4. Vá em **Firestore Database** > Inicie a coleção **`users`**.
 5. Crie um documento com o **ID do documento = UID copiado**.
@@ -87,9 +87,9 @@ Por segurança, o primeiro administrador deve ser inicializado pelo Firebase Con
 ```json
 {
   "uid": "COLE_O_UID_AQUI",
-  "name": "Administrador Ricci",
-  "email": "admin@ricci.com",
-  "phone": "(11) 4475-6918",
+  "name": "Administrador CCB",
+  "email": "admin@exemplo.com",
+  "phone": "(11) 99999-9999",
   "instrument": "Outro",
   "role": "admin",
   "totalHinos": 480,

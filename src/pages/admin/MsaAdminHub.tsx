@@ -384,7 +384,7 @@ export const MsaAdminHub: React.FC = () => {
             O Firestore na nuvem não possui as regras liberando a coleção <code>msa_phases</code>. Para corrigir:
           </p>
           <ol className="list-decimal list-inside text-xs space-y-1 text-amber-800/90 dark:text-amber-200 pl-1 font-mono">
-            <li>Acesse o <strong>Firebase Console &gt; ricci-5f4a6 &gt; Firestore Database</strong></li>
+            <li>Acesse o <strong>Firebase Console &gt; Firestore Database</strong></li>
             <li>Abra a aba <strong>Regras (Rules)</strong></li>
             <li>Substitua pelo conteúdo do arquivo <strong>firestore.rules</strong> do projeto</li>
             <li>Clique no botão azul <strong>Publicar (Publish)</strong></li>
