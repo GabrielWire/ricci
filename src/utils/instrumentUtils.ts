@@ -116,3 +116,47 @@ export function resolveInstrumento(raw?: string): Instrumento {
   const fallback = INSTRUMENTOS.find((i) => i.nome.toLowerCase().includes(str) || str.includes(i.nome.toLowerCase()));
   return fallback || INSTRUMENTOS[0];
 }
+
+/**
+ * Checks if a teacher/instructor is qualified to teach a specific student's instrument.
+ * Robust matching supporting:
+ * - Direct exact matches in instruments list
+ * - Resolved instrument ID comparison
+ * - General instructors (when no instruments specified or marked as all)
+ */
+export function isInstrutorHabilitadoParaInstrumento(
+  instrutor: { instruments?: string[]; instrument?: string; role?: string },
+  instrumentoAluno?: string
+): boolean {
+  if (!instrumentoAluno) return true;
+
+  const list = instrutor.instruments;
+  if (!list || list.length === 0) {
+    const rawInst = (instrutor.instrument || '').toLowerCase();
+    if (rawInst.includes('todos') || rawInst.includes('geral') || rawInst === '') {
+      return true;
+    }
+  } else {
+    if (list.some((i) => i.toLowerCase().includes('todos') || i.toLowerCase().includes('geral'))) {
+      return true;
+    }
+  }
+
+  const studentResolved = resolveInstrumento(instrumentoAluno);
+
+  if (list && list.length > 0) {
+    return list.some((inst) => {
+      if (inst.trim().toLowerCase() === instrumentoAluno.trim().toLowerCase()) return true;
+      const instResolved = resolveInstrumento(inst);
+      return instResolved.id === studentResolved.id;
+    });
+  }
+
+  if (instrutor.instrument) {
+    const instResolved = resolveInstrumento(instrutor.instrument);
+    return instResolved.id === studentResolved.id;
+  }
+
+  return false;
+}
+

@@ -8,7 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AlunosList } from './pages/admin/AlunosList';
-import { ProfessoresList } from './pages/admin/ProfessoresList';
+import { InstrutoresList } from './pages/admin/InstrutoresList';
 import { AlunoDetalhes } from './pages/admin/AlunoDetalhes';
 import { MsaAdminHub } from './pages/admin/MsaAdminHub';
 import { MetodosAdminHub } from './pages/admin/MetodosAdminHub';
@@ -27,7 +27,7 @@ const RootRedirect: React.FC = () => {
   const { currentUser, role, loading } = useAuth();
   if (loading) return null;
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (role === 'admin' || role === 'professor') return <Navigate to="/admin" replace />;
+  if (role === 'admin' || role === 'professor' || role === 'instrutor') return <Navigate to="/admin" replace />;
   return <Navigate to="/aluno" replace />;
 };
 
@@ -64,27 +64,29 @@ const MainLayout: React.FC = () => {
           {/* Root Redirect based on auth state */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Admin / Professor Protected Routes */}
+          {/* Admin / Instrutor Protected Routes */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor', 'instrutor']}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/admin/professores"
+            path="/admin/instrutores"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <ProfessoresList />
+                <InstrutoresList />
               </ProtectedRoute>
             }
           />
+          {/* Redirecionamento retroativo para /admin/professores */}
+          <Route path="/admin/professores" element={<Navigate to="/admin/instrutores" replace />} />
           <Route
             path="/admin/alunos"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor', 'instrutor']}>
                 <AlunosList />
               </ProtectedRoute>
             }
@@ -92,7 +94,7 @@ const MainLayout: React.FC = () => {
           <Route
             path="/admin/metodos"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor', 'instrutor']}>
                 <MetodosAdminHub />
               </ProtectedRoute>
             }
@@ -100,7 +102,7 @@ const MainLayout: React.FC = () => {
           <Route
             path="/admin/msa"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor', 'instrutor']}>
                 <MsaAdminHub />
               </ProtectedRoute>
             }
@@ -108,7 +110,7 @@ const MainLayout: React.FC = () => {
           <Route
             path="/admin/alunos/:id"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'professor']}>
+              <ProtectedRoute allowedRoles={['admin', 'professor', 'instrutor']}>
                 <AlunoDetalhes />
               </ProtectedRoute>
             }

@@ -114,7 +114,7 @@ export const AlunoMsa: React.FC = () => {
               Evolução Musical do Candidato
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Acompanhe seu avanço pelas 16 Fases do MSA avaliadas pelo seu professor para ingresso na orquestra da CCB.
+              Acompanhe seu avanço pelas 16 Fases do MSA avaliadas pelo seu instrutor para ingresso na orquestra da CCB.
             </p>
           </div>
 
@@ -169,7 +169,7 @@ export const AlunoMsa: React.FC = () => {
         {phases.length === 0 ? (
           <div className="py-16 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
             <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Nenhuma fase cadastrada no momento.</p>
-            <p className="text-xs text-slate-400 mt-1">O professor em breve disponibilizará a grade do MSA.</p>
+            <p className="text-xs text-slate-400 mt-1">O instrutor em breve disponibilizará a grade do MSA.</p>
           </div>
         ) : (
           <div className="space-y-3.5">
@@ -329,7 +329,7 @@ export const AlunoMsa: React.FC = () => {
                                   <MessageSquare className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                                   <div>
                                     <span className="font-bold block text-[11px] uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                                      Orientação do Professor:
+                                      Orientação do Instrutor:
                                     </span>
                                     <p className="mt-0.5 leading-relaxed font-medium">{teacherNotes}</p>
                                   </div>

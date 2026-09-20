@@ -57,6 +57,12 @@ export const AlunoDashboard: React.FC = () => {
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
               {inst.nome} ({inst.afinacao})
             </span>
+            {userData?.instrutorNome && (
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 flex items-center gap-1">
+                <GraduationCap className="w-3 h-3" />
+                Instrutor: {userData.instrutorNome}
+              </span>
+            )}
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1.5">

@@ -11,16 +11,24 @@ import {
   ExternalLink,
   X,
   Loader2,
+  GraduationCap,
 } from 'lucide-react';
 import { listStudents, createStudentByAdmin } from '../../services/studentService';
-import { INSTRUMENTOS_CATEGORIZADOS, resolveInstrumento } from '../../utils/instrumentUtils';
+import { listTeachers } from '../../services/teacherService';
+import {
+  INSTRUMENTOS_CATEGORIZADOS,
+  resolveInstrumento,
+  isInstrutorHabilitadoParaInstrumento,
+} from '../../utils/instrumentUtils';
 import type { UsuarioDoc } from '../../types/auth';
 
 export const AlunosList: React.FC = () => {
   const [students, setStudents] = useState<UsuarioDoc[]>([]);
+  const [instructors, setInstructors] = useState<UsuarioDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [filtroInstrumento, setFiltroInstrumento] = useState('todos');
+  const [filtroInstrutor, setFiltroInstrutor] = useState('todos');
   const [ordenacao, setOrdenacao] = useState<'nome' | 'progresso_desc' | 'progresso_asc'>('nome');
 
   // Modal State
@@ -34,15 +42,20 @@ export const AlunosList: React.FC = () => {
   const [novoEmail, setNovoEmail] = useState('');
   const [novoTelefone, setNovoTelefone] = useState('');
   const [novoInstrumento, setNovoInstrumento] = useState('Saxofone Alto (Mi♭)');
+  const [novoInstrutorId, setNovoInstrutorId] = useState('');
   const [novaSenha, setNovaSenha] = useState('ccb123456');
 
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const data = await listStudents();
-      setStudents(data);
+      const [studentsData, instructorsData] = await Promise.all([
+        listStudents(),
+        listTeachers(),
+      ]);
+      setStudents(studentsData);
+      setInstructors(instructorsData);
     } catch (err) {
-      console.error('Falha ao listar alunos:', err);
+      console.error('Falha ao listar alunos e instrutores:', err);
     } finally {
       setLoading(false);
     }
@@ -51,6 +64,20 @@ export const AlunosList: React.FC = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  // Instrutores habilitados para o instrumento selecionado no modal
+  const instrutoresHabilitados = useMemo(() => {
+    return instructors.filter((inst) =>
+      isInstrutorHabilitadoParaInstrumento(inst, novoInstrumento)
+    );
+  }, [instructors, novoInstrumento]);
+
+  // Se o instrumento mudar e o instrutor selecionado não for mais habilitado, reseta
+  useEffect(() => {
+    if (novoInstrutorId && !instrutoresHabilitados.some((i) => i.uid === novoInstrutorId)) {
+      setNovoInstrutorId('');
+    }
+  }, [instrutoresHabilitados, novoInstrutorId]);
 
   const handleCadastrarAluno = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,18 +96,23 @@ export const AlunosList: React.FC = () => {
 
     setCadastrando(true);
     try {
+      const instSelected = instructors.find((i) => i.uid === novoInstrutorId);
       await createStudentByAdmin({
         name: novoNome.trim(),
         email: novoEmail.trim(),
         phone: novoTelefone.trim(),
         instrument: novoInstrumento,
         initialPassword: novaSenha,
+        instrutorId: instSelected ? instSelected.uid : undefined,
+        instrutorNome: instSelected ? instSelected.name : undefined,
+        instrutorEmail: instSelected ? instSelected.email : undefined,
       });
 
       setModalSuccess(`Aluno ${novoNome} cadastrado com sucesso!`);
       setNovoNome('');
       setNovoEmail('');
       setNovoTelefone('');
+      setNovoInstrutorId('');
       setNovaSenha('ccb123456');
 
       await fetchStudents();
@@ -111,13 +143,22 @@ export const AlunosList: React.FC = () => {
           const q = busca.toLowerCase();
           const matchName = aluno.name?.toLowerCase().includes(q);
           const matchEmail = aluno.email?.toLowerCase().includes(q);
-          if (!matchName && !matchEmail) return false;
+          const matchInstrutor = aluno.instrutorNome?.toLowerCase().includes(q);
+          if (!matchName && !matchEmail && !matchInstrutor) return false;
         }
 
         if (filtroInstrumento !== 'todos') {
           const alunoInst = resolveInstrumento(aluno.instrument);
           const targetInst = resolveInstrumento(filtroInstrumento);
           if (alunoInst.id !== targetInst.id) return false;
+        }
+
+        if (filtroInstrutor !== 'todos') {
+          if (filtroInstrutor === 'sem_instrutor') {
+            if (aluno.instrutorId) return false;
+          } else if (aluno.instrutorId !== filtroInstrutor) {
+            return false;
+          }
         }
 
         return true;
@@ -128,7 +169,7 @@ export const AlunosList: React.FC = () => {
         if (ordenacao === 'progresso_asc') return (a.progressoGeral || 0) - (b.progressoGeral || 0);
         return 0;
       });
-  }, [students, busca, filtroInstrumento, ordenacao]);
+  }, [students, busca, filtroInstrumento, filtroInstrutor, ordenacao]);
 
   return (
     <div className="space-y-6">
@@ -172,11 +213,11 @@ export const AlunosList: React.FC = () => {
         </div>
 
         {/* Filter by Instrument with Categories */}
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 w-full md:w-auto">
           <select
             value={filtroInstrumento}
             onChange={(e) => setFiltroInstrumento(e.target.value)}
-            className="w-full md:w-56 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
+            className="w-full md:w-52 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
           >
             <option value="todos">Todos os instrumentos</option>
             {INSTRUMENTOS_CATEGORIZADOS.map((cat) => (
@@ -190,11 +231,26 @@ export const AlunosList: React.FC = () => {
             ))}
           </select>
 
+          {/* Filter by Instructor */}
+          <select
+            value={filtroInstrutor}
+            onChange={(e) => setFiltroInstrutor(e.target.value)}
+            className="w-full md:w-48 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
+          >
+            <option value="todos">Todos os instrutores</option>
+            <option value="sem_instrutor">Sem instrutor designado</option>
+            {instructors.map((inst) => (
+              <option key={inst.uid} value={inst.uid}>
+                {inst.name}
+              </option>
+            ))}
+          </select>
+
           {/* Sort */}
           <select
             value={ordenacao}
             onChange={(e) => setOrdenacao(e.target.value as any)}
-            className="w-full md:w-44 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
+            className="w-full md:w-40 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
           >
             <option value="nome">Ordem Alfabética</option>
             <option value="progresso_desc">Maior Progresso</option>
@@ -217,6 +273,7 @@ export const AlunosList: React.FC = () => {
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="py-3.5 px-4 sm:px-6">Aluno</th>
                   <th className="py-3.5 px-4">Instrumento Oficial</th>
+                  <th className="py-3.5 px-4 hidden lg:table-cell">Instrutor Designado</th>
                   <th className="py-3.5 px-4 hidden md:table-cell">Contato</th>
                   <th className="py-3.5 px-4 text-center">Progresso</th>
                   <th className="py-3.5 px-4 text-right">Ação</th>
@@ -253,6 +310,17 @@ export const AlunosList: React.FC = () => {
                             Afinação: {inst.afinacao} &bull; {inst.hinario}
                           </span>
                         </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 hidden lg:table-cell">
+                        {aluno.instrutorNome ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                            <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate max-w-[130px]">{aluno.instrutorNome}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400">Não designado</span>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4 hidden md:table-cell text-slate-600 dark:text-slate-300 text-xs">
@@ -420,6 +488,37 @@ export const AlunosList: React.FC = () => {
                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                   />
                 </div>
+              </div>
+
+              {/* Instrutor Designado (Filtrado pelo instrumento do aluno) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                  <span>Instrutor Designado</span>
+                  <span className="text-[11px] font-normal text-slate-400">
+                    {instrutoresHabilitados.length} habilitado(s) para {novoInstrumento.split('(')[0].trim()}
+                  </span>
+                </label>
+                <select
+                  value={novoInstrutorId}
+                  onChange={(e) => setNovoInstrutorId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 font-medium cursor-pointer"
+                >
+                  <option value="">-- Sem instrutor designado --</option>
+                  {instrutoresHabilitados.map((inst) => (
+                    <option key={inst.uid} value={inst.uid}>
+                      {inst.name} ({inst.email})
+                    </option>
+                  ))}
+                </select>
+                {instrutoresHabilitados.length === 0 ? (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                    ⚠️ Nenhum instrutor cadastrado possui habilitação para {novoInstrumento}. Você pode cadastrar o aluno e designar o instrutor posteriormente.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Este combo exibe apenas os instrutores habilitados a dar aula deste instrumento.
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">

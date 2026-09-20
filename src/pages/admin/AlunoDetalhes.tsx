@@ -24,7 +24,9 @@ import {
   getStudentProgressMap,
   updateHymnProgress,
   updateStudentProfile,
+  assignStudentInstructor,
 } from '../../services/studentService';
+import { listTeachers } from '../../services/teacherService';
 
 import {
   listMsaPhases,
@@ -34,7 +36,11 @@ import {
 } from '../../services/msaService';
 import { HINOS_DATA } from '../../data/hinosData';
 import { calcularTonalidadeInstrumento } from '../../data/instrumentsData';
-import { resolveInstrumento, INSTRUMENTOS_CATEGORIZADOS } from '../../utils/instrumentUtils';
+import {
+  resolveInstrumento,
+  INSTRUMENTOS_CATEGORIZADOS,
+  isInstrutorHabilitadoParaInstrumento,
+} from '../../utils/instrumentUtils';
 import {
   getStudentMethodProgress,
   updateStudentMethodProgress,
@@ -127,20 +133,30 @@ export const AlunoDetalhes: React.FC = () => {
   };
 
 
-  // Edit instrument mode for teacher
+  // Edit instrument & designated instructor mode
   const [isEditingInstrument, setIsEditingInstrument] = useState(false);
   const [selectedInstOption, setSelectedInstOption] = useState('');
   const [savingInstrument, setSavingInstrument] = useState(false);
+
+  const [instructors, setInstructors] = useState<UsuarioDoc[]>([]);
+  const [isEditingInstructor, setIsEditingInstructor] = useState(false);
+  const [selectedInstructorId, setSelectedInstructorId] = useState('');
+  const [savingInstructor, setSavingInstructor] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const studentData = await getStudentById(id);
+        const [studentData, instructorsData] = await Promise.all([
+          getStudentById(id),
+          listTeachers(),
+        ]);
+        setInstructors(instructorsData);
         setStudent(studentData);
         if (studentData) {
           setSelectedInstOption(studentData.instrument);
+          setSelectedInstructorId(studentData.instrutorId || '');
 
           // Load Hymns Progress
           const map = await getStudentProgressMap(id);
@@ -201,6 +217,41 @@ export const AlunoDetalhes: React.FC = () => {
     };
     fetchAll();
   }, [id]);
+
+  // Instrutores habilitados para o instrumento do aluno
+  const instrutoresHabilitados = useMemo(() => {
+    if (!student) return [];
+    return instructors.filter((inst) =>
+      isInstrutorHabilitadoParaInstrumento(inst, selectedInstOption || student.instrument)
+    );
+  }, [instructors, student, selectedInstOption]);
+
+  const handleSaveInstructor = async () => {
+    if (!student) return;
+    setSavingInstructor(true);
+    try {
+      const selected = instructors.find((i) => i.uid === selectedInstructorId);
+      await assignStudentInstructor(
+        student.uid,
+        selected ? { id: selected.uid, name: selected.name, email: selected.email } : null
+      );
+      setStudent((prev) =>
+        prev
+          ? {
+              ...prev,
+              instrutorId: selected?.uid || undefined,
+              instrutorNome: selected?.name || undefined,
+              instrutorEmail: selected?.email || undefined,
+            }
+          : null
+      );
+      setIsEditingInstructor(false);
+    } catch (err) {
+      console.error('Erro ao salvar instrutor:', err);
+    } finally {
+      setSavingInstructor(false);
+    }
+  };
 
   // Save Instrument Method General Settings & Aptitude
   const handleSaveMethod = async () => {
@@ -597,8 +648,9 @@ export const AlunoDetalhes: React.FC = () => {
             </div>
           </div>
 
-          {/* Instrument Selector / Badge */}
-          <div className="flex items-center gap-2">
+          {/* Instrument & Instructor Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Instrument Selector / Badge */}
             {isEditingInstrument ? (
               <div className="flex items-center gap-2">
                 <select
@@ -650,7 +702,63 @@ export const AlunoDetalhes: React.FC = () => {
                     setIsEditingInstrument(true);
                   }}
                   title="Alterar instrumento oficial do aluno"
-                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Designated Instructor Selector / Badge */}
+            {isEditingInstructor ? (
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedInstructorId}
+                  onChange={(e) => setSelectedInstructorId(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-indigo-400 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none"
+                >
+                  <option value="">-- Sem instrutor designado --</option>
+                  {instrutoresHabilitados.map((inst) => (
+                    <option key={inst.uid} value={inst.uid}>
+                      {inst.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSaveInstructor}
+                  disabled={savingInstructor}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  {savingInstructor ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  <span>Salvar</span>
+                </button>
+                <button
+                  onClick={() => setIsEditingInstructor(false)}
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">
+                      Instrutor Designado
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block">
+                      {student.instrutorNome || 'Não designado'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedInstructorId(student.instrutorId || '');
+                    setIsEditingInstructor(true);
+                  }}
+                  title="Alterar instrutor designado do aluno"
+                  className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>

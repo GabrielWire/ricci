@@ -158,7 +158,7 @@ export const AlunoMetodo: React.FC = () => {
               Plano de Estudos do Instrumento
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Consulte seu progresso página por página e lição por lição, com as notas e parecer do seu professor.
+              Consulte seu progresso página por página e lição por lição, com as notas e parecer do seu instrutor.
             </p>
           </div>
 
@@ -233,7 +233,7 @@ export const AlunoMetodo: React.FC = () => {
             <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
               <p className="font-bold text-slate-900 dark:text-white">Nenhum método registrado pelo instrutor ainda</p>
               <p>
-                Quando o seu professor avaliar e registrar sua lição atual no sistema, o seu progresso e notas pedagógicas aparecerão aqui.
+                Quando o seu instrutor avaliar e registrar sua lição atual no sistema, o seu progresso e notas pedagógicas aparecerão aqui.
                 Abaixo você já pode consultar os métodos oficiais e as metas de lições do seu instrumento!
               </p>
             </div>
@@ -479,7 +479,7 @@ export const AlunoMetodo: React.FC = () => {
               <span>Minhas Lições do Método ({metodoLessons.length})</span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Histórico de lições com status, notas e parecer pedagógico registrado pelo seu professor.
+              Histórico de lições com status, notas e parecer pedagógico registrado pelo seu instrutor.
             </p>
           </div>
 
@@ -571,7 +571,7 @@ export const AlunoMetodo: React.FC = () => {
                     <div className="p-2.5 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
                       <div className="flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-400">
                         <MessageSquare className="w-3 h-3" />
-                        <span>Orientação do Professor:</span>
+                        <span>Orientação do Instrutor:</span>
                       </div>
                       <p className="italic font-medium">"{lesson.teacherNotes}"</p>
                     </div>

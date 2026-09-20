@@ -1,6 +1,6 @@
 import { TODOS_INSTRUMENTOS_OFICIAIS } from '../utils/instrumentUtils';
 
-export type UserRole = 'admin' | 'professor' | 'aluno';
+export type UserRole = 'admin' | 'professor' | 'instrutor' | 'aluno';
 
 export type InstrumentoOficial = string;
 
@@ -20,6 +20,15 @@ export interface UsuarioDoc {
   hinosEmProgresso: number;
   progressoGeral: number; // 0 - 100
   
+  // Instrutores: Lista de instrumentos em que é apto a lecionar
+  instruments?: string[];
+
+  // Alunos: Instrutor designado
+  instrutorId?: string;
+  instrutorNome?: string;
+  instrutorEmail?: string;
+  instrutorTelefone?: string;
+
   // MSA Aggregate fields (cached for 1-read performance)
   msaCurrentPhaseId?: string;
   msaCurrentPhaseName?: string;

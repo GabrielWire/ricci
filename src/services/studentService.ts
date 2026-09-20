@@ -57,6 +57,22 @@ export async function updateStudentProfile(
 }
 
 /**
+ * Assigns or updates the designated instructor for a student.
+ */
+export async function assignStudentInstructor(
+  studentUid: string,
+  instrutor: { id: string; name: string; email: string } | null
+): Promise<void> {
+  const userRef = doc(db, 'users', studentUid);
+  await updateDoc(userRef, {
+    instrutorId: instrutor ? instrutor.id : null,
+    instrutorNome: instrutor ? instrutor.name : null,
+    instrutorEmail: instrutor ? instrutor.email : null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
  * Registers a new student through Firebase Authentication and creates their Firestore record.
  * Uses a secondary app instance so the currently logged-in Admin is NOT signed out!
  */
@@ -66,6 +82,9 @@ export async function createStudentByAdmin(studentData: {
   phone: string;
   instrument: InstrumentoOficial;
   initialPassword: string;
+  instrutorId?: string;
+  instrutorNome?: string;
+  instrutorEmail?: string;
 }): Promise<UsuarioDoc> {
   // Use a secondary App instance to isolate the new user creation session
   const secondaryApp = initializeApp(firebaseConfig, `createStudent_${Date.now()}`);
@@ -89,6 +108,9 @@ export async function createStudentByAdmin(studentData: {
       phone: studentData.phone.trim(),
       instrument: studentData.instrument,
       role: 'aluno',
+      instrutorId: studentData.instrutorId || undefined,
+      instrutorNome: studentData.instrutorNome || undefined,
+      instrutorEmail: studentData.instrutorEmail || undefined,
       totalHinos: 480,
       hinosConcluidos: 0,
       hinosEmProgresso: 0,

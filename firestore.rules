@@ -2,11 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to verify if user is admin or teacher
+    // Helper function to verify if user is admin or teacher/instructor
     function isTeacherOrAdmin() {
       return request.auth != null && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'Admin', 'ADMIN', 'professor', 'Professor', 'PROFESSOR']);
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'Admin', 'ADMIN', 'professor', 'Professor', 'PROFESSOR', 'instrutor', 'Instrutor', 'INSTRUTOR']);
     }
 
     function isAdmin() {
@@ -27,13 +27,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
       
       // Updates:
-      // - Teachers/Admins can update any field (including role, totals, MSA aggregates, Method aggregates)
+      // - Teachers/Admins can update any field (including role, totals, MSA aggregates, Method aggregates, assigned instructor)
       // - Students can ONLY update allowed profile fields (name, phone, instrument, hymn aggregates),
-      //   never role, email, uid, or MSA/Method official aggregates
+      //   never role, email, uid, or MSA/Method official aggregates or assigned instructor
       allow update: if isTeacherOrAdmin() || (
         isOwner(userId) &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'role', 'email', 'uid', 'createdAt',
+          'instruments',
+          'instrutorId', 'instrutorNome', 'instrutorEmail', 'instrutorTelefone',
           'msaCurrentPhaseId', 'msaCurrentPhaseName', 'msaCurrentPhaseOrder',
           'msaGeneralProgress', 'msaLessonsCompleted', 'msaTotalLessons',
           'metodoNome', 'metodoPosicao', 'metodoProgresso', 'metodoEstagioApto'

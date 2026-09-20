@@ -38,8 +38,8 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
   };
 
   const isAdmin = role === 'admin';
-  const isProfessor = role === 'professor';
-  const isStaff = isAdmin || isProfessor;
+  const isInstrutor = role === 'professor' || role === 'instrutor';
+  const isStaff = isAdmin || isInstrutor;
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-2xs transition-colors duration-200">
@@ -109,15 +109,15 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
 
                     {isAdmin && (
                       <Link
-                        to="/admin/professores"
+                        to="/admin/instrutores"
                         className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md transition-all ${
-                          isActive('/admin/professores')
+                          isActive('/admin/instrutores') || isActive('/admin/professores')
                             ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
                         <UserCog className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span>Professores</span>
+                        <span>Instrutores</span>
                       </Link>
                     )}
 
@@ -240,9 +240,9 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
                       <span className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-0.5">
                         <Shield className="w-2.5 h-2.5" /> Administrador
                       </span>
-                    ) : isProfessor ? (
+                    ) : isInstrutor ? (
                       <span className="text-purple-600 dark:text-purple-400 font-semibold flex items-center gap-0.5">
-                        <GraduationCap className="w-2.5 h-2.5" /> Professor
+                        <GraduationCap className="w-2.5 h-2.5" /> Instrutor
                       </span>
                     ) : (
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">

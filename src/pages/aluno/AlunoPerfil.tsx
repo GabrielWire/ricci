@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Mail, Phone, Music, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { UserCheck, Mail, Phone, Music, Save, CheckCircle2, AlertCircle, Loader2, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { updateStudentProfile } from '../../services/studentService';
 import { INSTRUMENTOS_CATEGORIZADOS, resolveInstrumento } from '../../utils/instrumentUtils';
@@ -148,6 +148,29 @@ export const AlunoPerfil: React.FC = () => {
               <span>Hinário: <strong className="text-slate-700 dark:text-slate-300">{resolved.hinario}</strong></span>
               <span>Clave: <strong className="text-slate-700 dark:text-slate-300">{resolved.clave}</strong></span>
             </div>
+          </div>
+
+          {/* Instrutor Designado */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Instrutor Designado
+            </label>
+            <div className="relative">
+              <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                disabled
+                value={
+                  userData?.instrutorNome
+                    ? `${userData.instrutorNome}${userData.instrutorEmail ? ` • ${userData.instrutorEmail}` : ''}`
+                    : 'Nenhum instrutor designado no momento'
+                }
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-600 dark:text-slate-300 cursor-not-allowed font-medium"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">
+              A designação do instrutor é realizada pelos administradores ou equipe de ensino.
+            </p>
           </div>
 
           <div className="pt-3">
