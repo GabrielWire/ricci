@@ -27,6 +27,7 @@ import {
   assignStudentInstructor,
 } from '../../services/studentService';
 import { listTeachers } from '../../services/teacherService';
+import { useAuth } from '../../contexts/AuthContext';
 
 import {
   listMsaPhases,
@@ -66,6 +67,7 @@ import type {
 } from '../../types/msa';
 
 export const AlunoDetalhes: React.FC = () => {
+  const { currentUser } = useAuth();
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -634,13 +636,19 @@ export const AlunoDetalhes: React.FC = () => {
               {student.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                   {student.name}
                 </h1>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold">
                   Ativo
                 </span>
+                {currentUser && (student.instrutorId === currentUser.uid || (student.instrutorEmail && student.instrutorEmail.toLowerCase() === currentUser.email?.toLowerCase())) && (
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-bold flex items-center gap-1 shadow-2xs">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    Seu Aluno Designado
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {student.email} {student.phone ? `• ${student.phone}` : ''}

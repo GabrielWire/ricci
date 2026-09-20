@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Users,
   Search,
@@ -8,11 +8,13 @@ import {
   Phone,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
   X,
   Loader2,
   GraduationCap,
+  Layers,
+  BookOpen,
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { listStudents, createStudentByAdmin } from '../../services/studentService';
 import { listTeachers } from '../../services/teacherService';
 import {
@@ -23,9 +25,22 @@ import {
 import type { UsuarioDoc } from '../../types/auth';
 
 export const AlunosList: React.FC = () => {
+  const { currentUser, userData, role } = useAuth();
+  const isAdmin = role === 'admin';
+  const isInstrutor = role === 'professor' || role === 'instrutor';
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [students, setStudents] = useState<UsuarioDoc[]>([]);
   const [instructors, setInstructors] = useState<UsuarioDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Tab: 'meus_alunos' vs 'todos'
+  const [abaAtiva, setAbaAtiva] = useState<'meus_alunos' | 'todos'>(() => {
+    return isInstrutor ? 'meus_alunos' : 'todos';
+  });
+
   const [busca, setBusca] = useState('');
   const [filtroInstrumento, setFiltroInstrumento] = useState('todos');
   const [filtroInstrutor, setFiltroInstrutor] = useState('todos');
@@ -45,8 +60,18 @@ export const AlunosList: React.FC = () => {
   const [novoInstrutorId, setNovoInstrutorId] = useState('');
   const [novaSenha, setNovaSenha] = useState('ccb123456');
 
+  // Auto-open modal if ?novo=1 in URL
+  useEffect(() => {
+    if (searchParams.get('novo') === '1') {
+      abrirModalNovoAluno();
+      searchParams.delete('novo');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams]);
+
   const fetchStudents = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const [studentsData, instructorsData] = await Promise.all([
         listStudents(),
@@ -54,8 +79,16 @@ export const AlunosList: React.FC = () => {
       ]);
       setStudents(studentsData);
       setInstructors(instructorsData);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Falha ao listar alunos e instrutores:', err);
+      const code = err?.code || '';
+      if (code === 'permission-denied' || String(err).includes('permission')) {
+        setErrorMessage(
+          'Permissão negada no Firestore ao listar alunos. Publique as regras de segurança com suporte a "instrutor" no Firebase Console.'
+        );
+      } else {
+        setErrorMessage('Não foi possível carregar a lista de alunos.');
+      }
     } finally {
       setLoading(false);
     }
@@ -64,6 +97,27 @@ export const AlunosList: React.FC = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  // Update tab default if user role loads after initial render
+  useEffect(() => {
+    if (isInstrutor && !isAdmin) {
+      setAbaAtiva('meus_alunos');
+    }
+  }, [isInstrutor, isAdmin]);
+
+  const abrirModalNovoAluno = () => {
+    setModalError('');
+    setModalSuccess('');
+
+    // Pre-select instructor and instrument if user is instructor
+    if (currentUser) {
+      setNovoInstrutorId(currentUser.uid);
+      if (userData?.instruments && userData.instruments.length > 0) {
+        setNovoInstrumento(userData.instruments[0]);
+      }
+    }
+    setModalOpen(true);
+  };
 
   // Instrutores habilitados para o instrumento selecionado no modal
   const instrutoresHabilitados = useMemo(() => {
@@ -112,7 +166,7 @@ export const AlunosList: React.FC = () => {
       setNovoNome('');
       setNovoEmail('');
       setNovoTelefone('');
-      setNovoInstrutorId('');
+      setNovoInstrutorId(isInstrutor && currentUser ? currentUser.uid : '');
       setNovaSenha('ccb123456');
 
       await fetchStudents();
@@ -135,9 +189,28 @@ export const AlunosList: React.FC = () => {
     }
   };
 
+  // Alunos designados para o usuário logado
+  const meusAlunosList = useMemo(() => {
+    if (!currentUser) return [];
+    const myUid = currentUser.uid;
+    const myEmail = (currentUser.email || '').toLowerCase();
+    const docEmail = (userData?.email || '').toLowerCase();
+
+    return students.filter((s) => {
+      const matchId = s.instrutorId && (s.instrutorId === myUid || s.instrutorId === userData?.uid);
+      const matchEmail =
+        s.instrutorEmail &&
+        (s.instrutorEmail.toLowerCase() === myEmail || (docEmail && s.instrutorEmail.toLowerCase() === docEmail));
+      return Boolean(matchId || matchEmail);
+    });
+  }, [students, currentUser, userData]);
+
+  // Base list depending on active tab
+  const baseStudentsList = abaAtiva === 'meus_alunos' ? meusAlunosList : students;
+
   // Filtered and Sorted Students
   const alunosFiltrados = useMemo(() => {
-    return students
+    return baseStudentsList
       .filter((aluno) => {
         if (busca.trim()) {
           const q = busca.toLowerCase();
@@ -153,7 +226,7 @@ export const AlunosList: React.FC = () => {
           if (alunoInst.id !== targetInst.id) return false;
         }
 
-        if (filtroInstrutor !== 'todos') {
+        if (abaAtiva === 'todos' && filtroInstrutor !== 'todos') {
           if (filtroInstrutor === 'sem_instrutor') {
             if (aluno.instrutorId) return false;
           } else if (aluno.instrutorId !== filtroInstrutor) {
@@ -169,10 +242,21 @@ export const AlunosList: React.FC = () => {
         if (ordenacao === 'progresso_asc') return (a.progressoGeral || 0) - (b.progressoGeral || 0);
         return 0;
       });
-  }, [students, busca, filtroInstrumento, filtroInstrutor, ordenacao]);
+  }, [baseStudentsList, busca, filtroInstrumento, filtroInstrutor, ordenacao, abaAtiva]);
 
   return (
     <div className="space-y-6">
+      {/* Alerta de erro do Firebase se houver */}
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-xs sm:text-sm">
+            <p className="font-bold">Aviso do Sistema</p>
+            <p className="mt-0.5">{errorMessage}</p>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -181,20 +265,43 @@ export const AlunosList: React.FC = () => {
             Alunos Cadastrados
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Gerencie candidatos da orquestra, instrumentos e acompanhe o progresso no Hinário 5.
+            Gerencie candidatos da orquestra, acompanhe aulas e faça a gestão pedagógica de Métodos, MSA e Hinário.
           </p>
         </div>
 
         <button
-          onClick={() => {
-            setModalError('');
-            setModalSuccess('');
-            setModalOpen(true);
-          }}
+          onClick={abrirModalNovoAluno}
           className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm shadow-indigo-600/30 transition-all active:scale-95 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Cadastrar Novo Aluno</span>
+        </button>
+      </div>
+
+      {/* Tabs de Seleção: Meus Alunos Designados vs Todos os Alunos */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <button
+          onClick={() => setAbaAtiva('meus_alunos')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            abaAtiva === 'meus_alunos'
+              ? 'bg-indigo-600 text-white shadow-2xs'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+          }`}
+        >
+          <GraduationCap className="w-4 h-4" />
+          <span>Meus Alunos Designados ({meusAlunosList.length})</span>
+        </button>
+
+        <button
+          onClick={() => setAbaAtiva('todos')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            abaAtiva === 'todos'
+              ? 'bg-indigo-600 text-white shadow-2xs'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Todos os Alunos da Orquestra ({students.length})</span>
         </button>
       </div>
 
@@ -231,20 +338,22 @@ export const AlunosList: React.FC = () => {
             ))}
           </select>
 
-          {/* Filter by Instructor */}
-          <select
-            value={filtroInstrutor}
-            onChange={(e) => setFiltroInstrutor(e.target.value)}
-            className="w-full md:w-48 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
-          >
-            <option value="todos">Todos os instrutores</option>
-            <option value="sem_instrutor">Sem instrutor designado</option>
-            {instructors.map((inst) => (
-              <option key={inst.uid} value={inst.uid}>
-                {inst.name}
-              </option>
-            ))}
-          </select>
+          {/* Filter by Instructor (only on 'todos' tab) */}
+          {abaAtiva === 'todos' && (
+            <select
+              value={filtroInstrutor}
+              onChange={(e) => setFiltroInstrutor(e.target.value)}
+              className="w-full md:w-48 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer font-medium"
+            >
+              <option value="todos">Todos os instrutores</option>
+              <option value="sem_instrutor">Sem instrutor designado</option>
+              {instructors.map((inst) => (
+                <option key={inst.uid} value={inst.uid}>
+                  {inst.name}
+                </option>
+              ))}
+            </select>
+          )}
 
           {/* Sort */}
           <select
@@ -273,15 +382,22 @@ export const AlunosList: React.FC = () => {
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="py-3.5 px-4 sm:px-6">Aluno</th>
                   <th className="py-3.5 px-4">Instrumento Oficial</th>
+                  <th className="py-3.5 px-4">Método &amp; MSA</th>
                   <th className="py-3.5 px-4 hidden lg:table-cell">Instrutor Designado</th>
                   <th className="py-3.5 px-4 hidden md:table-cell">Contato</th>
-                  <th className="py-3.5 px-4 text-center">Progresso</th>
-                  <th className="py-3.5 px-4 text-right">Ação</th>
+                  <th className="py-3.5 px-4 text-center">Hinário 5</th>
+                  <th className="py-3.5 px-4 text-right">Gestão de Aulas</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {alunosFiltrados.map((aluno) => {
                   const inst = resolveInstrumento(aluno.instrument);
+                  const isMeuAluno =
+                    currentUser &&
+                    (aluno.instrutorId === currentUser.uid ||
+                      (aluno.instrutorEmail &&
+                        aluno.instrutorEmail.toLowerCase() === currentUser.email?.toLowerCase()));
+
                   return (
                     <tr key={aluno.uid} className="hover:bg-slate-50/80 dark:hover:bg-slate-850/60 transition-colors">
                       <td className="py-3.5 px-4 sm:px-6">
@@ -290,9 +406,16 @@ export const AlunosList: React.FC = () => {
                             {aluno.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <span className="font-bold text-slate-900 dark:text-white block text-xs sm:text-sm">
-                              {aluno.name}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-900 dark:text-white block text-xs sm:text-sm">
+                                {aluno.name}
+                              </span>
+                              {isMeuAluno && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                  Seu Aluno
+                                </span>
+                              )}
+                            </div>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
                               {aluno.email}
                             </span>
@@ -307,14 +430,42 @@ export const AlunosList: React.FC = () => {
                             {inst.nome}
                           </span>
                           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5 ml-1">
-                            Afinação: {inst.afinacao} &bull; {inst.hinario}
+                            {inst.afinacao} &bull; {inst.hinario}
                           </span>
+                        </div>
+                      </td>
+
+                      {/* Método & MSA status rápido */}
+                      <td className="py-3.5 px-4">
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                              Método
+                            </span>
+                            <span className="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[140px]">
+                              {aluno.metodoPosicao || 'Não iniciado'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                              MSA
+                            </span>
+                            <span className="text-slate-700 dark:text-slate-300 text-[11px] truncate max-w-[140px]">
+                              {aluno.msaCurrentPhaseName || 'Não iniciado'}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
                       <td className="py-3.5 px-4 hidden lg:table-cell">
                         {aluno.instrutorNome ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                              isMeuAluno
+                                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                                : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60'
+                            }`}
+                          >
                             <GraduationCap className="w-3.5 h-3.5 shrink-0" />
                             <span className="truncate max-w-[130px]">{aluno.instrutorNome}</span>
                           </span>
@@ -325,22 +476,27 @@ export const AlunosList: React.FC = () => {
 
                       <td className="py-3.5 px-4 hidden md:table-cell text-slate-600 dark:text-slate-300 text-xs">
                         {aluno.phone ? (
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
+                          <a
+                            href={`https://wa.me/55${aluno.phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 text-emerald-600 hover:underline font-semibold"
+                          >
+                            <Phone className="w-3 h-3 text-emerald-500" />
                             {aluno.phone}
-                          </span>
+                          </a>
                         ) : (
                           <span className="text-slate-400 italic">Não informado</span>
                         )}
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="max-w-[140px] mx-auto">
+                        <div className="max-w-[120px] mx-auto">
                           <div className="flex justify-between text-[11px] font-mono font-bold mb-1 text-slate-700 dark:text-slate-300">
                             <span>{aluno.hinosConcluidos || 0}/480</span>
                             <span>{aluno.progressoGeral || 0}%</span>
                           </div>
-                          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-slate-700">
+                          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-200 dark:border-slate-700">
                             <div
                               className="bg-indigo-600 h-full rounded-full transition-all"
                               style={{ width: `${aluno.progressoGeral || 0}%` }}
@@ -350,13 +506,32 @@ export const AlunosList: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4 text-right">
-                        <Link
-                          to={`/admin/alunos/${aluno.uid}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all cursor-pointer"
-                        >
-                          <span>Gerenciar</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            to={`/admin/alunos/${aluno.uid}`}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-2xs"
+                            title="Acompanhar e gerenciar aulas deste aluno"
+                          >
+                            <GraduationCap className="w-3.5 h-3.5" />
+                            <span>Gerenciar Aulas</span>
+                          </Link>
+
+                          <Link
+                            to={`/admin/alunos/${aluno.uid}?tab=metodo`}
+                            className="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold transition-colors hidden sm:inline-flex"
+                            title="Ir direto para Aulas de Método"
+                          >
+                            <Layers className="w-3.5 h-3.5" />
+                          </Link>
+
+                          <Link
+                            to={`/admin/alunos/${aluno.uid}?tab=msa`}
+                            className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold transition-colors hidden sm:inline-flex"
+                            title="Ir direto para Aulas de MSA"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -367,8 +542,24 @@ export const AlunosList: React.FC = () => {
         ) : (
           <div className="py-16 text-center">
             <Users className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Nenhum aluno encontrado</p>
-            <p className="text-xs text-slate-400 mt-1">Ajuste os filtros ou cadastre um novo candidato.</p>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              {abaAtiva === 'meus_alunos'
+                ? 'Nenhum aluno designado para você encontrado'
+                : 'Nenhum aluno encontrado'}
+            </p>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              {abaAtiva === 'meus_alunos'
+                ? 'Você pode cadastrar novos alunos usando o botão acima, ou alternar para a aba "Todos os Alunos da Orquestra".'
+                : 'Ajuste os filtros de busca ou cadastre um novo candidato.'}
+            </p>
+            {abaAtiva === 'meus_alunos' && (
+              <button
+                onClick={() => setAbaAtiva('todos')}
+                className="mt-3 px-4 py-2 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100"
+              >
+                Ver Todos os Alunos da Orquestra
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -384,7 +575,9 @@ export const AlunosList: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">Cadastrar Novo Aluno</h3>
-                  <p className="text-xs text-slate-500">Cria o acesso para o candidato estudar o Hinário 5</p>
+                  <p className="text-xs text-slate-500">
+                    {isInstrutor ? 'Cadastra o aluno vinculado ao seu acompanhamento' : 'Cria o acesso para o candidato estudar o Hinário 5'}
+                  </p>
                 </div>
               </div>
               <button
@@ -506,7 +699,7 @@ export const AlunosList: React.FC = () => {
                   <option value="">-- Sem instrutor designado --</option>
                   {instrutoresHabilitados.map((inst) => (
                     <option key={inst.uid} value={inst.uid}>
-                      {inst.name} ({inst.email})
+                      {inst.name} {inst.uid === currentUser?.uid ? '(Você)' : ''} ({inst.email})
                     </option>
                   ))}
                 </select>
